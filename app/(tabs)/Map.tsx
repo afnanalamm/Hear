@@ -10,8 +10,8 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 // {as of 01/09/25}
 
 const INITIAL_REGION = {
-  latitude: 51.32,
-  longitude: 0,
+  latitude: 51.50185073438653,
+  longitude: -0.14046615655845635,
   latitudeDelta: 0,
   longitudeDelta: 0
 }
