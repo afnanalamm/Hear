@@ -3,6 +3,7 @@ import { StyleSheet, Text, TextInput, View, Pressable, Image, Button, ScrollView
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PostTypeSwitch from "@/components/PostTypeSwitch";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { server } from '@/components/serverConfig';
 // import { ScrollView } from 'react-native-web';
 
 // DateTimePickerAndroid.open({
@@ -12,7 +13,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 // DateTimePickerAndroid.dismiss();
 
 export default function Details() {
-  const [date, setDate] = useState(new Date(1598051730000));
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
+  const username = 'afnanalam';
+  const [date, setDate] = useState(new Date(1751375700000));
   const [mode, setMode] = useState('date');
   const [show, setShow] = useState(false);
 
@@ -31,6 +35,39 @@ export default function Details() {
     showMode('date');
   };
 
+  const onSubmit = async () => {
+    const postData = {
+      username: username,
+      description: description,
+      location: location
+    }
+
+    try {
+      const url = server + `/create_post`  // + (updating ? `update_post/${existingPost.id}` : "create_post")
+        const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(postData)
+        }
+        const response = await fetch(url, options)
+        if (response.status !== 201 && response.status !== 200) {
+            const data = await response.json()
+            console.log(data.message)
+            alert(data.message)
+            
+        } else {
+            alert("Post submitted successfully", postData)
+            console.log("Post submitted successfully", postData)
+        }
+
+    } catch (error) {
+    alert(`Error: ${error.message}`);
+  }
+
+  }
+
 
 
   return (
@@ -44,6 +81,8 @@ export default function Details() {
           numberOfLines={4}
           style={styles.multilineTextInput}
           placeholder=" Add some description..."
+          value={description}
+          onChangeText={setDescription}
         />
 
       
@@ -77,7 +116,7 @@ export default function Details() {
           testID="dateTimePicker"
           value={date}
           mode={mode}
-          is24Hour={true}
+          // is24Hour={true}
           onChange={onChange}
         />
       )}
@@ -92,6 +131,7 @@ export default function Details() {
           testID="dateTimePicker"
           value={date}
           is24Hour={true}
+          display='compact'
           onChange={onChange} 
         />
         </>
@@ -102,8 +142,10 @@ export default function Details() {
 
       <TextInput
         style={styles.textInput}
-        placeholder=' Name the area impacted'
+        placeholder='Name the area impacted'
         padding = '1'
+        value={location}
+        onChangeText={setLocation}
       />
       <TextInput
         style={styles.textInput}
@@ -111,7 +153,10 @@ export default function Details() {
         padding = '1'
       />
 
-      <Pressable style={styles.pressablePostButton}>
+      <Pressable 
+      style={styles.pressablePostButton}
+      onPress={onSubmit}
+      >
         <Text>Post!</Text>
       </Pressable>
 
