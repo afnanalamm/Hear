@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, Pressable, Image, Button, ScrollView, Platform } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context';
+import backendServerURL from '@/backendServerURL';
 import PostTypeSwitch from "@/components/PostTypeSwitch";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
 // import { ScrollView } from 'react-native-web';
 
 // DateTimePickerAndroid.open({
@@ -11,12 +12,19 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 // })
 // DateTimePickerAndroid.dismiss();
 
-export default function Details() {
-  const [date, setDate] = useState(new Date(1598051730000));
+export default function PostDetailsForm({ existingPost = {}}) { // updateCallback was also a function prop
+  const server = backendServerURL()
+  
+  // New date picker states and handlers
+ const [date, setDate] = useState(new Date());
   const [mode, setMode] = useState('date');
   const [show, setShow] = useState(false);
 
   const onChange = (event, selectedDate) => {
+    if (event.type === 'dismissed' || !selectedDate) {
+      setShow(false);
+      return;
+    }
     const currentDate = selectedDate;
     setShow(false);
     setDate(currentDate);
@@ -30,23 +38,77 @@ export default function Details() {
   const showDatepicker = () => {
     showMode('date');
   };
+  
+  //OLD  Date picker states and handlers
+  // const [date, setDate] = useState(new Date(1598051730000));
+  // const [mode, setMode] = useState('date');
+  // const [show, setShow] = useState(false);
+  
+  // const onChange = (event, selectedDate) => {
+  //   const currentDate = selectedDate;
+  //   setShow(false);
+  //   setDate(currentDate);
+  // };
 
+  // const showMode = (currentMode) => {
+  //   setShow(true);
+  //   setMode(currentMode);
+  // };
 
+  // const showDatepicker = () => {
+  //   showMode('date');
+  // };
+  // End date picker states and handlers
+
+  const username = "afnanalam"; // to be replaced with actual username from auth context or props
+  const [description, setDescription] = useState(existingPost.description || "");
+  const [location, setLocation] = useState(existingPost.location || "");
+
+  // const updating = Object.entries(existingPost).length !== 0
+
+  const onSubmit = async () => {
+        // e.preventDefault()
+
+        const data = {
+            username,
+            description,
+            location
+        }
+        const url = server + `/create_post`  // + (updating ? `update_post/${existingPost.id}` : "create_post")
+        const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        }
+        const response = await fetch(url, options)
+        if (response.status !== 201 && response.status !== 200) {
+            const data = await response.json()
+            alert(data.message)
+            
+        } else {
+            console.log("Post submitted successfully", data)
+        }
+    }
 
   return (
+    <SafeAreaProvider>
     <SafeAreaView style={styles.container}>
     <ScrollView style={{width: '95%', alignSelf: 'center'}}>
+      
       <View style={styles.verticalMultiplexContainer}>
         <Text style={styles.subheadingText}>Descriptions</Text>
         <TextInput
+          id='descriptionTextInput'
           editable
           multiline
           numberOfLines={4}
           style={styles.multilineTextInput}
           placeholder=" Add some description..."
+          value={description}
+          onChangeText={setDescription}
         />
-
-      
       </View>
 
       <View style={styles.horizontalMultiplexContainer}>
@@ -55,16 +117,17 @@ export default function Details() {
         <Text>News Post</Text>
       </View>
 
-      <View style={styles.verticalMultiplexContainer}>
-        <Text style={styles.subheadingText}>Add Media</Text>
-        <View style={styles.horizontalMultiplexContainer}>
-          <Pressable style={styles.pressableFilePicker}>
+      <View id='addMediaView'
+      style={styles.verticalMultiplexContainer}>
+        <Text id='addMediaSubheadingTest' style={styles.subheadingText}>Add Media</Text>
+        <View id='addMediaImageContainer' style={styles.horizontalMultiplexContainer}>
+          <Pressable id='addMediaFilePicker' style={styles.pressableFilePicker}>
             <Image source={require('@/assets/icons/file_picker_light.png')} style={{width: 50, height: 50}}/>
           </Pressable>
         </View>
       </View>
 
-      <View styles={styles.horizontalMultiplexContainer} >
+      {/* <View style={styles.horizontalMultiplexContainer} >
         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
 
       {Platform.OS === 'android' && (
@@ -83,9 +146,44 @@ export default function Details() {
       )}
       </>
       )}
-      
 
-      { Platform.OS === 'ios' && (
+      {Platform.OS === 'ios' && (
+      <>
+        <Pressable style={styles.pressableButton} onPress={showDatepicker}>
+          <Text>Set Deadline</Text>
+        </Pressable>
+        <Text style={styles.subheadingText}>{date.toDateString()}</Text>
+        {show && (
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={date}
+            mode={mode}
+            is24Hour={true}
+            onChange={onChange}
+          />
+        )}
+      </>
+    )}
+
+      {/* {Platform.OS === 'ios' && (
+      <>
+        <Button onPress={showDatepicker} title="Select Deadline" />
+        <Text style={styles.subheadingText}>{date.toDateString()}</Text>
+      
+      {show && (
+        <DateTimePicker
+          testID="dateTimePicker"
+          value={date}
+          mode={mode}
+          is24Hour={true}
+          onChange={onChange}
+        />
+      )}
+      </>
+      )}
+       */}
+
+     {/* { Platform.OS === 'ios' && (
         <>
         <Pressable style={styles.pressableButton}><Text>Set Deadline</Text></Pressable>
         <DateTimePicker
@@ -98,12 +196,16 @@ export default function Details() {
       )}
 
       </View>
-      </View>
+      </View> */}
 
       <TextInput
+        id='locationTextInput'
         style={styles.textInput}
         placeholder=' Name the area impacted'
-        padding = '1'
+        // padding = '1'
+        value={location}
+        onChangeText={setLocation}
+        
       />
       <TextInput
         style={styles.textInput}
@@ -111,12 +213,18 @@ export default function Details() {
         padding = '1'
       />
 
-      <Pressable style={styles.pressablePostButton}>
+      <Pressable 
+      id='submitPostButton'
+      onPress={onSubmit}
+      style={styles.pressablePostButton}
+      >
+              
         <Text>Post!</Text>
       </Pressable>
 
     </ScrollView>  
     </SafeAreaView>
+    </SafeAreaProvider>
   )
 }
 
@@ -188,7 +296,7 @@ const styles = StyleSheet.create({
   pressableFilePicker: {
 
     borderRadius: 5,
-    backColor: '#0056b3',
+    backgroundColor: '#0056b3',
     marginTop: 10,
     flexDirection: 'row',
     justifyContent: 'center',

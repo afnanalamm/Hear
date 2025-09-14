@@ -1,0 +1,3 @@
+1. assets\images\file_picker_light  .png from "https://www.freepik.com/icon/file_6337351". Icon by Rizki Ahmad Fauzi
+2. PostDetailsForm, PostContent inspired from https://github.com/techwithtim/Flask-React-Full-Stack-App/blob/main/frontend/src/
+3. Backend code inspired from https://github.com/techwithtim/Flask-React-Full-Stack-App/tree/main/backend

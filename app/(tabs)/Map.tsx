@@ -1,6 +1,5 @@
 import React from 'react';
-import MapView, {PROVIDER_DEFAULT} from 'react-native-maps';
-import {Marker} from 'react-native-maps';
+import MapView, {PROVIDER_DEFAULT, Marker} from 'react-native-maps';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 // boilerplate code adapted from, and 
@@ -36,6 +35,7 @@ const TextInputExample = () => {
 };
 
 export default function App() {
+  
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
