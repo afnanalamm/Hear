@@ -1,6 +1,8 @@
 import React from 'react';
 import {Text, View, SectionList, StatusBar, Pressable, StyleSheet, ScrollView, FlatList} from 'react-native';
 import ToggleSwitch from './ToggleSwitch';
+import { Button } from '@react-navigation/elements';
+import { router } from 'expo-router';
 
 // creating what the settings categories & subcategories will be, 
 const ThemeToggle = () => {
@@ -49,7 +51,9 @@ const DATA = [
   },
   {
     title: "Account Actions",
-    data: ["Disable Account", "Delete Account", "Log Out"]
+    data: ["Disable Account", "Delete Account", 
+    <Button title="Log Out" onPress={() => {alert('Logged Out'); router.replace('/SignIn')}} 
+    key={'logout'}>Log Out</Button>]
   }
 ]
 

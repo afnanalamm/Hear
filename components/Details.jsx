@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, Pressable, Image, Button, ScrollView, Platform } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context';
-import PostTypeSwitch from "@/components/PostTypeSwitch";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import ToggleSwitch from "@/components/ToggleSwitch";
+// import PostTypeSwitch from "@/components/PostTypeSwitch";
 import { server } from '@/components/serverConfig';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useState } from 'react';
+import { Button, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // import { ScrollView } from 'react-native-web';
 
 // DateTimePickerAndroid.open({
@@ -13,17 +14,24 @@ import { server } from '@/components/serverConfig';
 // DateTimePickerAndroid.dismiss();
 
 export default function Details() {
+  // Form state variables
+  const [userID, setUserID] = useState('');
   const [description, setDescription] = useState('');
+  const [postType, setPostType] = useState(''); // 'petition' or 'news post'
+  const [mediaURL, setMediaURL] = useState(''); // Placeholder for media file path
   const [location, setLocation] = useState('');
-  const username = 'afnanalam';
-  const [date, setDate] = useState(new Date(1751375700000));
-  const [mode, setMode] = useState('date');
+  const [tags, setTags] = useState('');
+  const today = new Date();
+
+  // Deadline date picker state variables and functions
+  const [deadline, setDeadline] = useState(new Date()); // Default to a fixed deadline date
+  const [mode, setMode] = useState('deadline');
   const [show, setShow] = useState(false);
 
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate;
+  const onChange = (selectedDate) => {
+    const currentDate = selectedDate || deadline;
     setShow(false);
-    setDate(currentDate);
+    setDeadline(currentDate);
   };
 
   const showMode = (currentMode) => {
@@ -32,14 +40,23 @@ export default function Details() {
   };
 
   const showDatepicker = () => {
-    showMode('date');
+    showMode('deadline');
   };
+
 
   const onSubmit = async () => {
     const postData = {
-      username: username,
+      userID: userID,
       description: description,
-      location: location
+      postType: postType,
+      mediaURL: mediaURL ? mediaURL : 'No media added',
+      deadline: deadline,
+      location: location,
+      tags: tags,
+
+      createdOn: today,
+
+
     }
 
     try {
@@ -74,6 +91,16 @@ export default function Details() {
     <SafeAreaView style={styles.container}>
     <ScrollView style={{width: '95%', alignSelf: 'center'}}>
       <View style={styles.verticalMultiplexContainer}>
+
+        <TextInput
+        style={styles.textInput}
+        placeholder=' Username?'
+        padding = '1'
+        placeholderTextColor={'grey'}
+        value={userID}
+        onChangeText={setUserID}
+      />
+
         <Text style={styles.subheadingText}>Descriptions</Text>
         <TextInput
           editable
@@ -90,9 +117,15 @@ export default function Details() {
 
       <View style={styles.horizontalMultiplexContainer}>
         <Text>Petition</Text>
-        <PostTypeSwitch/>
+        <ToggleSwitch
+          value={postType === 'News Post'} 
+          onValueChange={(value) => {
+            setPostType(value ? 'News Post' : 'Petition');
+          }}
+        />
         <Text>News Post</Text>
       </View>
+
 
       <View style={styles.verticalMultiplexContainer}>
         <Text style={styles.subheadingText}>Add Media</Text>
@@ -109,12 +142,12 @@ export default function Details() {
       {Platform.OS === 'android' && (
       <>
         <Button onPress={showDatepicker} title="Select Deadline" />
-        <Text style={styles.subheadingText}>{date.toDateString()}</Text>
+        <Text style={styles.subheadingText}>{deadline.toDateString()}</Text>
       
       {show && (
         <DateTimePicker
           testID="dateTimePicker"
-          value={date}
+          value={deadline}
           mode={mode}
           // is24Hour={true}
           onChange={onChange}
@@ -129,7 +162,7 @@ export default function Details() {
         <Pressable style={styles.pressableButton}><Text>Set Deadline</Text></Pressable>
         <DateTimePicker
           testID="dateTimePicker"
-          value={date}
+          value={deadline}
           is24Hour={true}
           display='compact'
           onChange={onChange} 
@@ -144,13 +177,17 @@ export default function Details() {
         style={styles.textInput}
         placeholder='Name the area impacted'
         padding = '1'
+        placeholderTextColor={'grey'}
         value={location}
         onChangeText={setLocation}
       />
       <TextInput
         style={styles.textInput}
-        placeholder=' Add some tags'
+        placeholder=' Add some tags...'
         padding = '1'
+        placeholderTextColor={'grey'}
+        value={tags}
+        onChangeText={setTags}
       />
 
       <Pressable 
@@ -159,6 +196,8 @@ export default function Details() {
       >
         <Text>Post!</Text>
       </Pressable>
+
+      {/* <Button title="Submit" onPress={onSubmit} style={styles.pressableButton} /> */}
 
     </ScrollView>  
     </SafeAreaView>
@@ -214,7 +253,8 @@ const styles = StyleSheet.create({
     minHeight: 100,
     borderWidth: 1,
     borderColor: '#ccc',
-    marginTop: 10,
+    textAlignVertical: 'top',
+    marginTop: 2,
     borderRadius: 5,
     backgroundColor: '#f9f9f9',
   },
