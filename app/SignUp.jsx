@@ -14,8 +14,15 @@ export default function SignUp() {
   const [contactNumber, setContactNumber] = useState('a');
   const [password, setPassword] = useState('a');
   const [confirmPassword, setConfirmPassword] = useState('a');
+  const [addressLine1, setAddressLine1] = useState('');
+  const [addressLine2, setAddressLine2] = useState('');
+  const [city, setCity] = useState('');
+  const [postCode, setPostCode] = useState('');
+  const [country, setCountry] = useState('');
+
+
   const superUser = false;
-  const today = new Date();
+  // const today = new Date();
 
   const [mode, setMode] = useState('date of birth');
   const [show, setShow] = useState(false);
@@ -63,8 +70,13 @@ export default function SignUp() {
       emailAddress: emailAddress,
       contactNumber: contactNumber,
       passwordHash: passwordHash,
+      addressLine1: addressLine1,
+      addressLine2: addressLine2,
+      city: city,
+      postCode: postCode,
+      country: country,
       superUser: superUser,
-      createdOn: today,
+      // createdOn: today,
     };
 
     try {
@@ -76,7 +88,14 @@ export default function SignUp() {
         },
         body: JSON.stringify(newAccountData),
       };
-      const response = await fetch(url, options);
+      
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Network error: Request timed out')), 5000)
+      );
+
+      const fetchPromise = fetch(url, options);
+
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
       if (response.status !== 201 && response.status !== 200) {
         const data = await response.json();
         console.log(data.message);
@@ -84,12 +103,13 @@ export default function SignUp() {
       } else {
         alert(`Account created successfully! Please log in to continue.`);
         console.log('Account created successfully', newAccountData);
+        redirectToSignIn();
       }
-    } catch (error) {
+        } catch (error) {
       alert(`Error: ${error.message}`);
-    }
+        }
+    
 
-    redirectToSignIn();
   };
 
   const redirectToSignIn = () => {
@@ -158,10 +178,11 @@ export default function SignUp() {
 
 
           <Text style={styles.label}>Address</Text>
-          {renderInput('Address Line 1', '', () => {})}
-          {renderInput('Address Line 2', '', () => {})}
-          {renderInput('City', '', () => {})}
-          {renderInput('Post Code', '', () => {})}
+          {renderInput('Address Line 1', addressLine1, setAddressLine1)}
+          {renderInput('Address Line 2', addressLine2, setAddressLine2)}
+          {renderInput('Post Code', postCode, setPostCode)}
+          {renderInput('Country', country, setCountry)}
+
 
           <Text style={styles.label}>Login Details</Text>
           {renderInput('Email', emailAddress, setEmailAddress)}

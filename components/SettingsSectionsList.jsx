@@ -55,18 +55,15 @@ const DATA = [
     <Button title="Log Out" onPress={() => {alert('Logged Out'); router.replace('/SignIn')}} 
     key={'logout'}>Log Out</Button>]
   }
-]
-
+];
 const renderItem = ({ item }) => (
   <Pressable style={{ padding: 16 }}>
     <Text style={{ fontSize: 18 }}>{item}</Text>
   </Pressable>
 );
-
 const renderSectionHeader = ({ section }) => (
   <Text style={{fontSize:24}}>{section.title}</Text>
 );
-
 export default function SettingsSectionsList() {
   return (
     <View>
@@ -80,11 +77,6 @@ export default function SettingsSectionsList() {
   );
 }
 const styles = StyleSheet.create({
-
-  // container: {
-  //   paddingTop: StatusBar.currentHeight,
-  //   marginHorizontal: 16,
-  // },
   pressableItem: {
     backgroundColor: '#0090ffff',
     padding: 20,
