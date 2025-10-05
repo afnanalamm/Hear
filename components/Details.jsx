@@ -142,7 +142,7 @@ export default function Details() {
       {Platform.OS === 'android' && (
       <>
         <Button onPress={showDatepicker} title="Select Deadline" />
-        <Text style={styles.subheadingText}>{deadline.toDateString()}</Text>
+        <Text style={styles.subheadingText}>{deadline instanceof Date ? deadline.toDateString() : ''}</Text>
       
       {show && (
         <DateTimePicker

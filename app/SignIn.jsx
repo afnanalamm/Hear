@@ -3,16 +3,69 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import React, {useState} from 'react'
 import { Link, router } from 'expo-router'
 import * as Crypto from 'expo-crypto';
+import { server } from '../components/serverConfig';
+
 
 export default function SignIn() {
-  const [email, setEmail] = useState('');
+  const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSignIn = () => {
-    console.log('Sign In button pressed');
-    router.replace('/(tabs)/Feed');
+  const handleSignIn = async () => {
+    // console.log('Sign In button pressed');
+    // router.replace('/(tabs)/Feed');
+    let required_fields = [emailAddress, password];
+    if (required_fields.some(field => field === '')) {
+      alert('Please fill in all fields.');
+    }
+
+    const passwordHash = Crypto.digest(Crypto.CryptoDigestAlgorithm.SHA256, password)
+
+    const loginData = {
+      emailAddress : emailAddress,
+      passwordHash : passwordHash
+    }
+
+    try {
+      const url = server + `/check_login`;
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginData),
+      };
+      const response = await fetch(url, options);
+      if (response.status !== 200){
+        const data = await response.json();
+        console.log(data.message);
+        alert(data.message);
+      } else {
+        alert("Logged In!");
+        console.log(`User ${emailAddress} has signed in`);
+
+      }
+
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
+
+    const url = server + `/check_login`;
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginData),
+      };
+      const response = await fetch(url, options);
+
+    if (response.status === 200) {
+      router.replace('/(tabs)/Feed');
+    }
   };
 
+  
+  
   return (
     <SafeAreaProvider>
     <SafeAreaView>
@@ -22,7 +75,7 @@ export default function SignIn() {
       <View>
 
 
-        <TextInput placeholder='Email or Username' value={email} onChangeText={setEmail}
+        <TextInput placeholder='Email or Username' value={emailAddress} onChangeText={setEmailAddress}
         placeholderTextColor={'grey'}
         style={{borderWidth: 1, borderColor: 'grey', height: 40}}/>
 
@@ -31,8 +84,9 @@ export default function SignIn() {
         style={{borderWidth: 1, borderColor: 'grey', height: 40}}/>
 
         <Pressable style={styles.button} onPress={handleSignIn}>
-          <Link href="/(tabs)/Feed">Sign In</Link>
+          <Text>Sign In</Text>
         </Pressable>
+
 
         <View>
           <Pressable
