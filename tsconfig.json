@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "components/SettingsSectionsList.jsx", "components/Details.tsx", "components/ToggleSwitch.jsx", "app/(tabs)/Feed.jsx", "app/SignIn.jsx", "app/SignUp.jsx"  ]
+, "components/SettingsSectionsList.jsx", "components/Details.tsx", "components/ToggleSwitch.jsx", "app/(tabs)/Feed.jsx", "app/SignIn.jsx", "app/SignUp.jsx", "app/(tabs)/Map.jsx"  ]
 }

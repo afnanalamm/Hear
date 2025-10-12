@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, FlatList, StyleSheet, RefreshControl } from "react-native";
+import { View, Text, Image, FlatList, StyleSheet, RefreshControl, Pressable } from "react-native";
 import { server } from "@/components/serverConfig";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { Button } from "@react-navigation/elements";
 
 export default function App(){
   const [posts, setPosts] = useState([]);
@@ -25,7 +26,12 @@ export default function App(){
       if (isRefresh) setRefreshing(true); // Only set refreshing for pull-to-refresh  
       const response = await fetch(`${server}/allposts`); // I'll need to change this.
                                                           // Or may work around it later on, to fetch other data.
+      
       const posts = await response.json();
+
+      // const mediaResponse = await fetch(`${server}/uploads/${posts.mediaURL}`);
+      // const mediaBlob = await mediaResponse.blob();
+
       setPosts(posts);
     } catch (error) {
       console.error(error);
@@ -47,30 +53,53 @@ export default function App(){
     
       <FlatList
         data={posts}
-        renderItem={({ item }) => <ProductCard item={item} />}
+        renderItem={({ item }) => <PostCard item={item} />}
         keyExtractor={(item) => item.postID.toString()}
         refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
       />
-    
-
     </SafeAreaView>
     </SafeAreaProvider>
   );
 };
 
-const ProductCard = ({ item }) => {
+const PostCard = ({ item }) => {
+  const imageURL = item.mediaURL ? `${server}/uploads/${item.mediaURL}` : null;
   return (
-    <View style={styles.productCard}>
-      <Text style={styles.title}>{item.userID}</Text>
+    <View style={styles.PostCard}>
+
+      <Text style={styles.title}>
+        {item.title.split("__", 1)}
+      </Text>
+      <Text>Posted {item.createdOn}</Text>
+
+      <Image
+        source={
+          imageURL
+            ? { uri: imageURL }
+            : require('@/assets/icons/placeholder.png')
+        }
+        style={styles.image}
+      />
+
+
+      <Text>{item.userID} from {item.location}</Text>
       <Text>Description: {item.description}</Text>
-      <Text>Location: {item.location}</Text>
-      {/* <Text>This is a: {item.postType}</Text> */}
       <Text>This is a: {item.postType}</Text>
       <Text>Deadline to make change: {item.deadline}</Text>
       <Text>Tags added: {item.tags}</Text>
       
+      <View style={styles.AllInteractions}>
+        <Pressable style={styles.pressableButton}>
+          <Text>Agree</Text>
+        </Pressable>
+
+        <Pressable style={styles.pressableButton}>
+          <Text>Disagree</Text>
+        </Pressable>
+      </View>
+
     </View>
   );
 };
@@ -78,7 +107,7 @@ const ProductCard = ({ item }) => {
 
 
 const styles = StyleSheet.create({
-  productCard: {
+  PostCard: {
     backgroundColor: "white",
     borderWidth: 0.5,
     borderColor: "gray",
@@ -87,10 +116,41 @@ const styles = StyleSheet.create({
     margin: 15,
     borderRadius: 10,
   },
+  AllInteractions: {
+    backgroundColor: "white",
+    borderWidth: 0.5,
+    borderColor: "gray",
+    elevation: 1,
+    padding: 10,
+    margin: 15,
+    borderRadius: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+  },
   title: {
     color: "black",
     fontSize: 20,
   },
+  image: {
+  width: '100%',      // or a fixed value like 200
+  height: 200,
+  resizeMode: 'cover', // or 'contain' depending on your design
+  borderRadius: 10,
+  marginVertical: 10,
+  },
+  pressableButton: {
+    borderRadius: 5,
+    backgroundColor: '#ffee00cc',
+    color: 'white',
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    width: 'auto',
+    padding: 10,
+  },
+
 });
 
 

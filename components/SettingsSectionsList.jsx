@@ -1,11 +1,14 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {Text, View, SectionList, StatusBar, Pressable, StyleSheet, ScrollView, FlatList} from 'react-native';
-import ToggleSwitch from './ToggleSwitch';
+import ToggleSwitch from './PostTypeSwitch';
 import { Button } from '@react-navigation/elements';
 import { router } from 'expo-router';
 
 // creating what the settings categories & subcategories will be, 
 const ThemeToggle = () => {
+  const [isLightTheme, setIsLightTheme] = useState(false);
+  const toggleThemeSwitch = () => setIsLightTheme(previousState => !previousState);
+  
   return(
     <View style={{ 
       flexDirection: 'row', 
@@ -14,11 +17,13 @@ const ThemeToggle = () => {
       width: '100%' 
       }}>
       <Text>Change Theme</Text>
-      <ToggleSwitch />
+      <ToggleSwitch value={isLightTheme} onValueChange={toggleThemeSwitch} />
     </View>
   )
 };
 const TwoFA_Toggle = () => {
+  const [isTwoFAEnabled, setIsTwoFAEnabled] = useState(false);
+  const toggleTwoFASwitch = () => setIsTwoFAEnabled(previousState => !previousState);
   return(
     <View style={{ 
       flexDirection: 'row', 
@@ -27,7 +32,7 @@ const TwoFA_Toggle = () => {
       width: '100%' 
       }}>
       <Text>Two Factor Authentication</Text>
-      <ToggleSwitch />
+      <ToggleSwitch value={isTwoFAEnabled} onValueChange={toggleTwoFASwitch} />
     </View>
   )
 };

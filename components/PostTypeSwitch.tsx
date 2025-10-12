@@ -3,7 +3,7 @@ import {Switch, StyleSheet, View} from 'react-native';
 // Code adapted from https://reactnative.dev/docs/switch
 
 
-const ToggleSwitch = () => {
+const PostTypeSwitch = () => {
   const [isEnabled, setIsEnabled] = useState(false);
   const toggleSwitch = () => setIsEnabled(previousState => !previousState);
 
@@ -28,4 +28,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ToggleSwitch;
+export default PostTypeSwitch;
