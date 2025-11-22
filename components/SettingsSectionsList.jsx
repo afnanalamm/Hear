@@ -1,16 +1,16 @@
 import React, {useState} from 'react';
 import {Text, View, SectionList, StatusBar, Pressable, StyleSheet, ScrollView, FlatList} from 'react-native';
-import ToggleSwitch from './PostTypeSwitch';
+import ToggleSwitch from './ToggleSwitch';
 import { Button } from '@react-navigation/elements';
 import { router } from 'expo-router';
 
 // creating what the settings categories & subcategories will be, 
-const ThemeToggle = () => {
+const ThemeToggle = () => { // component for theme toggle switch
   const [isLightTheme, setIsLightTheme] = useState(false);
   const toggleThemeSwitch = () => setIsLightTheme(previousState => !previousState);
   
   return(
-    <View style={{ 
+    <View style={{ // styling the container view for the toggle switch
       flexDirection: 'row', 
       alignItems: 'center', 
       justifyContent: 'space-between', 
@@ -21,7 +21,7 @@ const ThemeToggle = () => {
     </View>
   )
 };
-const TwoFA_Toggle = () => {
+const TwoFA_Toggle = () => { // component for 2FA toggle switch
   const [isTwoFAEnabled, setIsTwoFAEnabled] = useState(false);
   const toggleTwoFASwitch = () => setIsTwoFAEnabled(previousState => !previousState);
   return(
@@ -36,9 +36,8 @@ const TwoFA_Toggle = () => {
     </View>
   )
 };
-const DATA = [ 
+const DATA = [ // array of objects representing the sections and their respective items
   {
-
     title: "Organisational Details",
     data: ["Name","Mayor Name", "Office Address", "Username", "Contact Number", "Profile Picture"]
   },
@@ -61,12 +60,12 @@ const DATA = [
     key={'logout'}>Log Out</Button>]
   }
 ];
-const renderItem = ({ item }) => (
+const renderItem = ({ item }) => ( //function to render each item in the sectioned settings list
   <Pressable style={{ padding: 16 }}>
     <Text style={{ fontSize: 18 }}>{item}</Text>
   </Pressable>
 );
-const renderSectionHeader = ({ section }) => (
+const renderSectionHeader = ({ section }) => ( // function to render each section header
   <Text style={{fontSize:24}}>{section.title}</Text>
 );
 export default function SettingsSectionsList() {
@@ -81,7 +80,7 @@ export default function SettingsSectionsList() {
     </View>
   );
 }
-const styles = StyleSheet.create({
+const styles = StyleSheet.create({ // declaring all the styles used in this component
   pressableItem: {
     backgroundColor: '#0090ffff',
     padding: 20,

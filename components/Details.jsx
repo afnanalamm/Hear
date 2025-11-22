@@ -1,55 +1,47 @@
-import PostTypeSwitch from "@/components/PostTypeSwitch";
-import * as ImagePicker from 'expo-image-picker';
 import { server } from '@/components/serverConfig';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { useState } from 'react';
-import { ActivityIndicator, Modal, Button, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system';
 import { StorageAccessFramework, documentDirectory } from 'expo-file-system';
-
-// Access StorageAccessFramework like this:
-
-// import { ScrollView } from 'react-native-web';
-
-// DateTimePickerAndroid.open({
-//   value: new Date(1598051730000),
-//   onChange: (event, selectedDate) => {}
-// })
-// DateTimePickerAndroid.dismiss();
+import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+import { Button, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ToggleSwitch from "./ToggleSwitch";
 
 export default function Details() {
-  // Form state variables
+  // Declaring form state variables
   const [userID, setUserID] = useState('');
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(''); // Post title
   const [description, setDescription] = useState('');
   const [postType, setPostType] = useState(''); // 'petition' or 'news post'
   const [mediaURL, setMediaURL] = useState(''); // Placeholder for media file path
-  const [uploading, setUploading] = useState(false);
-  const [media, setMedia] = useState([]);
+  const [uploading, setUploading] = useState(false); // Uploading state, to help show activity indicator (when loading)
+  const [media, setMedia] = useState([]); // Array to hold media file URIs
   const [location, setLocation] = useState('');
   const [tags, setTags] = useState('');
   const today = new Date();
   const timestamp = today.getTime();
-  const imgDir = StorageAccessFramework ? '' : documentDirectory + 'images/';
+  const imgDir = StorageAccessFramework ? '' : documentDirectory + 'images/'; // Directory to store images. This is on phone's file system.
 
-  // Modal and other state variables:
+
+    // Modal and other state variables:
   const [mediaSourceModalVisible, setMediaSourceModalVisible] = useState(false);
   const [previewsFromMedia, setPreviewsFromMedia] = useState([]);
   const [uri, setUri] = useState('');
 
-  // Deadline date picker state variables and functions
+
+  // Deadline date picker state variables
   const [deadline, setDeadline] = useState(new Date());
   const [mode, setMode] = useState('deadline');
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(false); // this is for showing date picker on Android
 
-  const onChange = (selectedDate) => {
+  const onChange = (selectedDate) => { // handling date change from date picker
     const currentDate = selectedDate || deadline;
     setShow(false);
     setDeadline(currentDate);
   };
 
-  const showMode = (currentMode) => {
+  const showMode = (currentMode) => { // show date picker mode for Android
     setShow(true);
     setMode(currentMode);
   };
@@ -57,6 +49,7 @@ export default function Details() {
   const showDatepicker = () => {
     showMode('deadline');
   };
+  
 
   // Ensure images directory exists
   const checkDirExists = async () => {
@@ -85,44 +78,11 @@ export default function Details() {
     setMedia([...media, destination]);
   };
 
-  // // Upload media to backend server
-  // const uploadMedia = async (uri) => {
-  //   try {
-  //     setUploading(true);
-  //     const formData = new FormData();
-  //     formData.append('media', {
-  //       uri: uri,
-  //       name: `${title}__${timestamp}_media.jpeg`,
-  //       type: 'image/jpeg',
-  //     });
-
-  //     const response = await fetch(`${server}/upload_media`, {
-  //       method: 'POST',
-  //       body: formData,
-  //     });
-
-  //     const data = await response.json();
-
-  //     if (response.ok) {
-  //       setMediaURL(data.url || uri);
-  //       alert('Media uploaded successfully!');
-  //       console.log('Uploaded media URL:', data.url);
-  //     } else {
-  //       alert('Upload failed: ' + (data.message || response.statusText));
-  //     }
-  //   } catch (error) {
-  //     alert('Upload failed: ' + error.message);
-  //   } finally {
-  //     setUploading(false);
-  //   }
-  // };
-
   // Delete image from file system
   const deleteMedia = async (uri) => {
     // await FileSystem.File.delete(uri);
     setPreviewsFromMedia(previewsFromMedia.filter((i) => i !== uri));
 };
-
 
   // Select media from library or camera
   const selectMedia = async (useLibrary) => {
@@ -250,7 +210,7 @@ export default function Details() {
           transparent={true}
           visible={mediaSourceModalVisible}
           
-          onRequestClose={() => setMediaSourceModalVisible(false)}
+          onRequestClose={() => setMediaSourceModalVisible(false)} 
 
           >
             <View style={styles.centeredView}>
@@ -284,20 +244,26 @@ export default function Details() {
           </View>
         </Modal>
 
-        
+        <View style={styles.verticalMultiplexContainer}> 
+          {/* Creating a temporary usernmae text input box, for testing purposes.
+          When the system can properly handle session management, this will be removed.
+          For now, this allows me to "show" different users creating posts by changing
+          just the username.
+          The verticalMultiplexContainer is way to organize component containers that are
+          to be distributed vertically. Multiplex essentially means containing multiple items.
+          There is another horizontalMultiplexContainer for horizontal distribution. */}
 
-        <View style={styles.verticalMultiplexContainer}>
           <TextInput
             style={styles.textInput}
             placeholder=' Username?'
             padding='1'
             placeholderTextColor={'grey'}
-            value={userID}
-            onChangeText={setUserID}
+            value={userID}  // the state variable holding the input value
+            onChangeText={setUserID} // the function to update the state variable
           />
 
           <TextInput
-            style={styles.textInput}
+            style={styles.textInput} // Post title input
             placeholder=' Post Title?'
             padding='1'
             placeholderTextColor={'grey'}
@@ -305,7 +271,8 @@ export default function Details() {
             onChangeText={setTitle}
           />
 
-          <Text style={styles.subheadingText}>Descriptions</Text>
+          <Text style={styles.subheadingText}>Descriptions</Text> 
+          {/* Description input field */}
           <TextInput
             editable
             multiline
@@ -319,7 +286,7 @@ export default function Details() {
 
         <View style={styles.horizontalMultiplexContainer}>
           <Text>Petition</Text>
-          <PostTypeSwitch
+          <ToggleSwitch
             value={postType === 'News Post'}
             onValueChange={(value) => {
               setPostType(value ? 'News Post' : 'Petition');
@@ -329,7 +296,9 @@ export default function Details() {
         </View>
 
         <View style={styles.verticalMultiplexContainer}>
-          <Text style={styles.subheadingText}>Add Media</Text>
+          {/* Adding the upload media button */}
+
+        <Text style={styles.subheadingText}>Add Media</Text>
          <View style={styles.selectedMediaContainer}>
             <Pressable style={styles.addMediaButton} onPress={() => setMediaSourceModalVisible(true)}>
               <Image source={require('@/assets/icons/file_picker_light.png')} style={styles.addMediaIcon} />
@@ -343,10 +312,10 @@ export default function Details() {
               {renderPreviews()}
             </ScrollView>
           </View>
-
         </View>
 
-        <View style={styles.horizontalMultiplexContainer}>
+        <View style={styles.horizontalMultiplexContainer}> 
+          {/* // Creating the datepicker for Android */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             {Platform.OS === 'android' && (
               <>
@@ -365,7 +334,7 @@ export default function Details() {
                 )}
               </>
             )}
-
+            // Creating the datepicker for iOS
             {Platform.OS === 'ios' && (
               <>
                 <Pressable style={styles.pressableButton}>
@@ -383,7 +352,9 @@ export default function Details() {
           </View>
         </View>
 
-        <TextInput
+        <TextInput 
+        // Plaintext input for location, as temporary solution
+  
           style={styles.textInput}
           placeholder='Name the area impacted'
           padding='1'
@@ -391,7 +362,7 @@ export default function Details() {
           value={location}
           onChangeText={setLocation}
         />
-        <TextInput
+        <TextInput  // Plaintext input for location, as temporary solution
           style={styles.textInput}
           placeholder=' Add some tags...'
           padding='1'
@@ -400,7 +371,8 @@ export default function Details() {
           onChangeText={setTags}
         />
 
-        <Pressable style={styles.pressablePostButton} onPress={onSubmit}>
+        <Pressable style={styles.pressablePostButton} onPress={onSubmit}> 
+          {/* Submit post button */}
           <Text>Post!</Text>
         </Pressable>
       </ScrollView>
@@ -436,6 +408,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: 5,
   },
+  horizontalMultiplexContainer: {
+    width: '100%',
+    padding: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'stretch',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginTop: 10,
+    borderRadius: 5,
+  },
   textInput: {
     width: '100%',
     minHeight: 40,
@@ -455,17 +438,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#f9f9f9',
   },
-  horizontalMultiplexContainer: {
-    width: '100%',
-    padding: 5,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'stretch',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    marginTop: 10,
-    borderRadius: 5,
-  },
+  
   pressableFilePicker: {
     borderRadius: 5,
     backgroundColor: '#b8b8b8ff',

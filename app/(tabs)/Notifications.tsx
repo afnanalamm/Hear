@@ -1,69 +1,63 @@
-import { Text, View, ScrollView } from "react-native"; // importing commonly used components from "react-native" library
-import { Link } from "expo-router"; // importing the Link component from expo router library
+import React from "react";
+import { Text, View, ScrollView, StyleSheet } from "react-native";
 
+function CategoryPill({ title }: { title: string }) {
+    return <Text style={styles.pillText}>{title}</Text>;
+}
+function NotificationItem({ text }: { text: string }) {
+    return <Text style={styles.notificationText}>{text}</Text>;
+}
 export default function Notifications() {
-    // Creates an exportable functional object for this main .tsx file
-
-    const CATEGORY_PILLS = [
-  {
-    title: 'First Item',
-  },
-  {
-   title: 'Second Item',
-  },
-  {
-    title: 'Third Item',
-  },
-];
+    const CATEGORY_PILLS = [];
+    for (let index = 0; index < 10; index++) {
+        CATEGORY_PILLS.push({ title: `Category ${index + 1}` })
+    }
+    const NOTIFICATIONS = [];
+        for (let index = 0; index < 15; index++) {
+            NOTIFICATIONS.push(`Notification ${index + 1}`);                    
+    }
 
     return (
-        <View className="tabBody" id="notificationTabBody">
-            
-            <View>
-                {/* <FlatList horizontal renderItem={
-                    <Text>Hello</Text>
-                }/> */}
-            <ScrollView horizontal showsVerticalScrollIndicator={false}>
-                    <Text style={{padding:15}}>Category1</Text>
-                    <Text style={{padding:15}}>Category2</Text>
-                    <Text style={{padding:15}}>Category3</Text>
-                    <Text style={{padding:15}}>Category4</Text>
-                    <Text style={{padding:15}}>Category5</Text>
-                    <Text style={{padding:15}}>Category6</Text>
-                    <Text style={{padding:15}}>Category7</Text>
-            </ScrollView>
-
-            <ScrollView style={{
-                            padding:15, 
-                            alignContent:"center",
-                            borderColor: 'black',
-                            alignSelf: 'stretch',
-                            
-
-                        }}
-                        showsVerticalScrollIndicator={true}>
-                    <Text style={{padding:15}}>Notification 1</Text>
-                    <Text style={{padding:15}}>Notification 2</Text>
-                    <Text style={{padding:15}}>Notification 3</Text>
-                    <Text style={{padding:15}}>Notification 4</Text>
-                    <Text style={{padding:15}}>Notification 5</Text>
-                    <Text style={{padding:15}}>Notification 6</Text>
-                    <Text style={{padding:15}}>Notification 7</Text>
-                    <Text style={{padding:15}}>Notification 1</Text>
-                    <Text style={{padding:15}}>Notification 2</Text>
-                    <Text style={{padding:15}}>Notification 3</Text>
-                    <Text style={{padding:15}}>Notification 4</Text>
-                    <Text style={{padding:15}}>Notification 5</Text>
-                    <Text style={{padding:15}}>Notification 6</Text>
-                    <Text style={{padding:15}}>Notification 7</Text>
-            </ScrollView>
-
+        <View style={styles.tabBody} id="notificationTabBody">
+            <View style={styles.container}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.categoryScrollContent}
+                >
+                    {CATEGORY_PILLS.map((pill, idx) => (
+                        <CategoryPill key={idx} title={pill.title} />))}
+                </ScrollView>
+                <ScrollView
+                    style={styles.notificationsScroll}
+                    showsVerticalScrollIndicator={true}
+                >
+                    {
+                    NOTIFICATIONS.map((n, i) => (
+                        <NotificationItem key={i} text={n} />))}
+                </ScrollView>
             </View>
-
-
-
-
         </View>
-        
-    )
+    );
 }
+
+const styles = StyleSheet.create({
+    tabBody: {
+        flex: 1,
+        backgroundColor: "#fff",},
+    container: {
+        flex: 1,},
+    categoryScrollContent: {
+        alignItems: "center",
+        paddingVertical: 8,},
+    pillText: {
+        padding: 15,},
+    notificationsScroll: {
+        padding: 15,
+        alignContent: "center",
+        borderColor: "black",
+        alignSelf: "stretch",},
+    notificationText: {
+        padding: 15,
+    },
+});

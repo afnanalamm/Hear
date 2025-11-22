@@ -5,3 +5,10 @@
     "source.sortMembers": "explicit"
   }
 }
+{
+  "editor.tokenColorCustomizations": {
+    "[Dark Modern]": {
+      "comments": "#FFFFFF"
+    }
+  }
+}

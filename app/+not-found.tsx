@@ -40,7 +40,8 @@ import { useEffect } from 'react';
 export default function NotFoundScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/SignIn');
+      // router.replace('/SignIn');
+      router.replace('/(tabs)/Feed');
     }, 1);
 
     return () => clearTimeout(timer); // cleanup if unmounted early
