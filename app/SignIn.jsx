@@ -7,9 +7,11 @@ import { server } from '../components/serverConfig';
 
 
 export default function SignIn() {
+  // State hooks to store user input
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
 
+  // Function triggered when Sign In button is pressed
   const handleSignIn = async () => {
     if (!emailAddress || !password){
       alert("Please fill in all fields.");
@@ -17,11 +19,10 @@ export default function SignIn() {
     }
     
     
-    try {
+    try { 
       const passwordHash = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        password
-      );
+        Crypto.CryptoDigestAlgorithm.SHA256, password);
+        // Hashing the password using SHA-256
 
 
       const loginData = {
@@ -37,19 +38,22 @@ export default function SignIn() {
         body: JSON.stringify(loginData),
       };
 
-      
+      // Setting a network timeout for the fetch request to avoid hanging
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Network error: Request timed out')), 5000)
+        setTimeout(() => reject(new Error('Network error: Request timed out')), 5000) // 5 secs
       );
 
       
-      const response = await Promise.race([
+      const response = await Promise.race([ 
         fetch(url, options),
         timeoutPromise
       ]);
+      // Using Promise.race, The purpose of race here is to ensure that 
+      // if the fetch request takes too long (exceeds 5 seconds), 
+      // the timeoutPromise will reject first, triggering the catch block.
 
-      // const response = await fetch(url, options);
-      const data = await response.json();
+      // Preparing to handle the server response
+      const data = await response.json(); // Parsing JSON response from server
       if (response.status === 200) {
         console.log(`User ${emailAddress} has signed in`);
         alert('Logged In!');
@@ -59,7 +63,7 @@ export default function SignIn() {
         alert(data.message || 'Login failed');
       }
 
-    } catch (error) {
+    } catch (error) { // Executed if fetch fails or times out
       console.error('Login error:', error);
       alert(`Error: ${error.message}`);
     }
@@ -68,9 +72,12 @@ export default function SignIn() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
+
+        {/* App title and subtitle */}
         <Text style={styles.header}>Hear</Text>
         <Text style={styles.subtitle}>Log In to start using this app</Text>
         <View style={styles.form}>
+          {/* Email / Username input field */}
           <TextInput
             placeholder="Email or Username"
             value={emailAddress}
@@ -79,6 +86,7 @@ export default function SignIn() {
             style={styles.input}
             autoCapitalize="none"
           />
+          {/* Password input field */}
           <TextInput
             placeholder="Password"
             value={password}
@@ -88,24 +96,30 @@ export default function SignIn() {
             secureTextEntry
             autoCapitalize="none"
           />
+          {/* Sign In button */}
           <Pressable style={styles.button} onPress={handleSignIn}>
             <Text style={styles.buttonText}>Sign In</Text>
           </Pressable>
           <View style={styles.links}>
+            {/* Navigation to Sign Up screen */}
             <Pressable onPress={() => router.replace('/SignUp')}>
               <Text style={styles.linkText}>Create new account</Text>
             </Pressable>
+            {/* Placeholder for password recovery */}
             <Pressable>
               <Text style={styles.linkText}>Forgotten Password?</Text>
             </Pressable>
+          {/* Divider line */}
           </View>
           <View style={styles.divider} />
+          {/* Social login buttons */}
           <Pressable style={styles.secondaryButton}>
             <Text style={styles.buttonText}>Continue with Google</Text>
           </Pressable>
           <Pressable style={styles.secondaryButton}>
             <Text style={styles.buttonText}>Continue with Apple</Text>
           </Pressable>
+          {/* Terms and Privacy Policy links */}
           <Text style={styles.terms}>
             By continuing, you agree to our{' '}
             <Link href="https://codeshare.io/heart&cs">Terms of Service</Link> and{' '}
@@ -119,6 +133,7 @@ export default function SignIn() {
   );
 }
 
+// All the styles used in this component
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   header: { fontSize: 22, fontWeight: 'bold', marginBottom: 8 },

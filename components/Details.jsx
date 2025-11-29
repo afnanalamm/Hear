@@ -127,9 +127,9 @@ export default function Details() {
   
   const onSubmit = async () => {
     const timestamp = today.getTime();
-    const uniqueTitle = `${title}__${timestamp}`;
+    const uniqueTitle = `${title}__${timestamp}`; // Unique filename title by appending timestamp
 
-    const postData = {
+    const postData = { // Preparing the data object to send in the request body
       userID: userID,
       title: uniqueTitle,
       description: description,
@@ -142,42 +142,48 @@ export default function Details() {
     };
 
     try {
-      const url = server + `/create_post`;
-      const options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(postData)
-      };
-      const response = await fetch(url, options);
-      if (response.status !== 201 && response.status !== 200) {
-        const data = await response.json();
-        console.log(data.message);
-        alert(data.message);
-      } else {
-        alert("Post submitted successfully", postData);
-        console.log("Post submitted successfully", postData);
+      const url = server + `/create_post`; // Construct the API endpoint URL (server variable + route)
+      
+      const options = { // defining request options for the fetch call
+          method: "POST",                        // HTTP method
+          headers: {
+              "Content-Type": "application/json" // Tell server a JSON is being sent
+          },
+          body: JSON.stringify(postData)         // Convert JS object to JSON string
       }
-      
-      
+      const response = await fetch(url, options) // Send request, wait for response
+
+      // Check if the response status indicates success (200 or 201)
+      if (response.status !== 201 && response.status !== 200) {
+          // If not successful, parse the response body for error message
+          const data = await response.json()
+          console.log(data.message)   // 
+          alert(data.message)         // Logging & showing error on screen for debugging purposes
+      } else {
+          // If successful, notify user and log the submitted data.
+          // To be changed later for privacy; currently I'm doing this for debugging
+          alert("Post submitted successfully", postData)
+          console.log("Post submitted successfully", postData)
+      }
     } catch (error) {
+      // Siming handling of network/other errors
       alert(`Error: ${error.message}`);
     }
+
     if (previewsFromMedia.length > 0) {
       // await uploadMedia(previewsFromMedia[0]); // actual file URI
       const uri = previewsFromMedia[0];
       
       try {
-      setUploading(true);
+      setUploading(true); // Set uploading state to true to show activity indicator
       const formData = new FormData();
       formData.append('media', {
         uri: uri,
-        name: `${uniqueTitle}_media.jpeg`,
+        name: `${uniqueTitle}_media.jpeg`, // Naming the file with the unique title
         type: 'image/jpeg',
       });
 
-      const response = await fetch(`${server}/upload_media`, {
+      const response = await fetch(`${server}/upload_media`, { // uploading media to server
         method: 'POST',
         body: formData,
       });
@@ -334,7 +340,7 @@ export default function Details() {
                 )}
               </>
             )}
-            // Creating the datepicker for iOS
+            {/* // Creating the datepicker for iOS */}
             {Platform.OS === 'ios' && (
               <>
                 <Pressable style={styles.pressableButton}>

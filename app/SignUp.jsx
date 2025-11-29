@@ -137,7 +137,7 @@ export default function SignUp() {
             Request activation to start using this app
           </Text>
 
-          <Text style={styles.label}>Personal Information</Text>
+          <Text style={styles.label}>Personal Information</Text> {/* start of personal info fields*/}
           {renderInput('First Name', firstName, setFirstName)}
           {renderInput('Last Name ', lastName, setLastName)}
           
@@ -176,15 +176,14 @@ export default function SignUp() {
             </View>
           </View>
 
-
-          <Text style={styles.label}>Address</Text>
+          <Text style={styles.label}>Address</Text> {/* start of address fields*/}
           {renderInput('Address Line 1', addressLine1, setAddressLine1)}
           {renderInput('Address Line 2', addressLine2, setAddressLine2)}
           {renderInput('Post Code', postCode, setPostCode)}
           {renderInput('Country', country, setCountry)}
 
 
-          <Text style={styles.label}>Login Details</Text>
+          <Text style={styles.label}>Login Details</Text> {/* start of login details fields*/}
           {renderInput('Email', emailAddress, setEmailAddress)}
           {renderInput('Phone Number', contactNumber, setContactNumber)}
           {renderInput('Password', password, setPassword, true)}
