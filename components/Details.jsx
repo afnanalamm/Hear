@@ -127,14 +127,16 @@ export default function Details() {
   
   const onSubmit = async () => {
     const timestamp = today.getTime();
-    const uniqueTitle = `${title}__${timestamp}`; // Unique filename title by appending timestamp
+    const safeTitle = title.trim().replace(/[^\w]/g, '_');  // Only letters, numbers, underscores
+    const uniqueTitle_for_media = `${safeTitle}__${timestamp}`;
 
     const postData = { // Preparing the data object to send in the request body
       userID: userID,
-      title: uniqueTitle,
+      title: title,
+      uniqueTitle_for_media: uniqueTitle_for_media,
       description: description,
       postType: postType,
-      mediaURL: `${uniqueTitle}_media.jpeg`,
+      mediaURL: `${uniqueTitle_for_media}_media.jpeg`,
       deadline: deadline,
       location: location,
       tags: tags,
@@ -179,7 +181,7 @@ export default function Details() {
       const formData = new FormData();
       formData.append('media', {
         uri: uri,
-        name: `${uniqueTitle}_media.jpeg`, // Naming the file with the unique title
+        name: `${uniqueTitle_for_media}_media.jpeg`, // Naming the file with the unique title
         type: 'image/jpeg',
       });
 
