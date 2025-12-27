@@ -10,6 +10,7 @@ export default function SignIn() {
   // State hooks to store user input
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
+  const [userID, setUserID] = useState('');
 
   // Function triggered when Sign In button is pressed
   const handleSignIn = async () => {
@@ -58,6 +59,7 @@ export default function SignIn() {
         console.log(`User ${emailAddress} has signed in`);
         alert('Logged In!');
         router.replace('/(tabs)/Feed');
+        setUserID(data.userID); // Storing userID from server response
       } else {
         console.log(data.message);
         alert(data.message || 'Login failed');

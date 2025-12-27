@@ -1,60 +1,80 @@
-import { server } from "@/components/serverConfig";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { userID } from "@/app/SignIn.jsx"
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  StyleSheet,
+  RefreshControl,
+  Pressable,
+  TextInput,
+  Alert,
+} from "react-native";
+import { server } from "@/components/serverConfig";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
-export default function App(){ 
+// Mock current user (in real app, get this from auth context)
+export const CURRENT_USER_ID = "user123"; // Replace with actual logged-in user later
+
+export default function App() {
   // setting all the required states
   const [posts, setPosts] = useState([]); // dynamic array to hold posts fetched from server
   const [refreshing, setRefreshing] = useState(false);
-  const [numAgree, setNumAgree] = useState(12343); // starting with placeholder agree/disagree counts
-  const [numDisagree, setNumDisagree] = useState(654);
-  
-  const CURRENT_USER_ID = userID; // get current user ID from SignIn component
-  
 
   useEffect(() => {
     getAllPosts();
-  }, []);   // The second parameter is a dependency array, which ensures the effect runs only 
-            // once when the component mounts. Component mounting on a React Native app is similar
-            // to page load on a web app. 
-            // I write these comments for my own understanding, btw (to the moderator)
-            // Modified parts in App component
+  }, []); // The second parameter is a dependency array, which ensures the effect runs only
+          // once when the component mounts. Component mounting on a React Native app is similar
+          // to page load on a web app.
+          // I write these comments for my own understanding, btw (to the moderator)
 
   const getAllPosts = async (isRefresh = false) => {
     try {
-      if (isRefresh) setRefreshing(true); // Only set refreshing for pull-to-refresh  
-      const response = await fetch(`${server}/allposts/${CURRENT_USER_ID}`); // I'll need to change this.
-      // Or may work around it later on, to fetch other data.
-      
-      const posts = await response.json();
+      if (isRefresh) setRefreshing(true); // Only set refreshing for pull-to-refresh
+      const response = await fetch(`${server}/allposts`);
 
-      // Initialize interaction state for each post after they have been fetched
-      const postsWithInteraction = posts.map(post => ({
+      if (!response.ok) throw new Error("Failed to fetch posts");
+
+      const postsData = await response.json();
+
+      // Initialize interaction state for each post 
+      const postsWithInteraction = postsData.map(post => ({
         ...post,
-        // userHasAgreed: false,
-        // userHasDisagreed: false,
-        agreeCount: post.agreeCount || 0, // if not defined, start at 0
+        userHasAgreed: false,
+        userHasDisagreed: false,
+        agreeCount: post.agreeCount || 0,
         disagreeCount: post.disagreeCount || 0,
       }));
 
       setPosts(postsWithInteraction);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching posts:", error);
       Alert.alert("Error", "Could not load posts. Please try again.");
     } finally {
-      if (isRefresh) setRefreshing(false); // resetting refreshing state after fetch
+      if (isRefresh) setRefreshing(false);
     }
   };
 
   const onRefresh = () => {
-    getAllPosts(true); 
+    getAllPosts(true);
   };
 
-    // Handle Agree/Disagree action
+  // Handle Agree/Disagree action
   const handleVote = async (postId, action) => {
+    const post = posts.find(p => p.postID === postId);
+    if (!post) return;
+
+    // Prevent double voting
+    if (action === "agree" && post.userHasAgreed) {
+      Alert.alert("Already voted", "You have already agreed with this post.");
+      return;
+    }
+    if (action === "disagree" && post.userHasDisagreed) {
+      Alert.alert("Already voted", "You have already disagreed with this post.");
+      return;
+    }
+
     try {
       const response = await fetch(`${server}/vote`, {
         method: "POST",
@@ -62,36 +82,35 @@ export default function App(){
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          postID: postId,
+          postID: post.postID,
+          postTitle: post.title,
           userID: CURRENT_USER_ID,
-          reactionType: action, // "agree" or "disagree"
+          action: action, // "agree" or "disagree"
+          timestamp: new Date().toISOString(),
         }),
       });
 
       if (!response.ok) throw new Error("Vote failed");
 
-      const data = await response.json();
-
-      // now the app should re-render the post so that the user sees the impact they've made
+      // Update local state optimistically
       setPosts(prevPosts =>
         prevPosts.map(p =>
           p.postID === postId
             ? {
                 ...p,
-                agreeCount: data.agreeCount,
-                disagreeCount: data.disagreeCount,
-                userVoteType: data.userVoteType,
+                agreeCount: action === "agree" ? p.agreeCount + 1 : p.agreeCount,
+                disagreeCount: action === "disagree" ? p.disagreeCount + 1 : p.disagreeCount,
+                userHasAgreed: action === "agree" ? true : p.userHasAgreed,
+                userHasDisagreed: action === "disagree" ? true : p.userHasDisagreed,
               }
             : p
         )
       );
     } catch (error) {
       console.error("Vote error:", error);
-      Alert.alert(`${error.message}`);
+      Alert.alert("Failed", "Could not record your vote. Try again.");
     }
   };
-
-// FlatList is returned
 
   return (
     <SafeAreaProvider>
@@ -111,11 +130,15 @@ export default function App(){
   );
 }
 
-const PostCard = ({ item, onVote, currentUserId }) => {
-  const mediaURL = item.mediaURL ? `${server}/uploads/${encodeURIComponent(item.mediaURL)}` : null;
-  let agreeCounterText, disagreeCounterText; // default counter texts. Declared without any value
-  let agreeButtonText = "Agree"; // default button texts
-  let disagreeButtonText = "Disagree"; // default button texts
+export const PostCard = ({ item, onVote, currentUserId }) => {
+  const mediaURL = item.mediaURL
+    ? `${server}/uploads/${encodeURIComponent(item.mediaURL)}`
+    : null;
+
+  let agreeButtonText = "Agree";
+  let disagreeButtonText = "Disagree";
+  let agreeCounterText = "Agreed: ";
+  let disagreeCounterText = "Disagreed: ";
 
   if (item.postType === "Petition") {
     agreeButtonText = "Sign";
@@ -127,16 +150,13 @@ const PostCard = ({ item, onVote, currentUserId }) => {
     disagreeCounterText = "Disagreed";
   }
 
-  const userVoteType = item.userVoteType; // "agree", "disagree", or null
-
-  const userHasAgreed = userVoteType === "agree";
-  const userHasDisagreed = userVoteType === "disagree";
-
+  const hasVoted = item.userHasAgreed || item.userHasDisagreed;
+  const userVoteType = item.userHasAgreed ? "agree" : item.userHasDisagreed ? "disagree" : null;
 
   return (
     <View style={styles.PostCard}>
       <View style={styles.horizontalMultiplexContainer}>
-        <Ionicons name="person-circle" size={40} color={styles.lightThemeIconColor} />
+        <Ionicons name="person-circle" size={40} color="#000" />
         <View>
           <Text style={{ fontWeight: "bold" }}>{item.userID}</Text>
           <Text style={{ color: "gray" }}>from {item.location}</Text>
@@ -159,6 +179,7 @@ const PostCard = ({ item, onVote, currentUserId }) => {
         }
         style={styles.image}
       />
+
       <Text style={{ marginVertical: 8 }}>{item.description}</Text>
       <Text><Text style={{fontWeight:'600'}}>Type:</Text> {item.postType}</Text>
       {item.deadline && (
@@ -167,21 +188,20 @@ const PostCard = ({ item, onVote, currentUserId }) => {
       {item.tags && (
         <Text><Text style={{fontWeight:'600'}}>Tags:</Text> {item.tags}</Text>
       )}
-      
+
       <View style={styles.AllInteractions}>
         {/* Agree / Disagree Buttons */}
         <View style={styles.AgreeDisagreeContainer}>
           <Pressable
             style={[
               styles.pressableButton,
-              userHasAgreed && styles.buttonPressed,
+              item.userHasAgreed && styles.buttonPressed,
             ]}
             onPress={() => onVote(item.postID, "agree")}
-            // disabled={hasVoted} // button is disabled if user has already voted.
-            // look above for hasVoted declaration
+            disabled={hasVoted}
           >
-            <Ionicons name="thumbs-up" size={18} color={userHasAgreed ? "white" : "black"} />
-            <Text style={{ marginLeft: 5, color: userHasAgreed ? "white" : "black" }}>
+            <Ionicons name="thumbs-up" size={18} color={item.userHasAgreed ? "white" : "black"} />
+            <Text style={{ marginLeft: 5, color: item.userHasAgreed ? "white" : "black" }}>
               {agreeButtonText}
             </Text>
           </Pressable>
@@ -189,14 +209,14 @@ const PostCard = ({ item, onVote, currentUserId }) => {
           <Pressable
             style={[
               styles.pressableButton,
-              userHasDisagreed && styles.buttonPressed,
+              item.userHasDisagreed && styles.buttonPressed,
               { backgroundColor: "#ff4444cc" },
             ]}
             onPress={() => onVote(item.postID, "disagree")}
-            // disabled={hasVoted}
+            disabled={hasVoted}
           >
-            <Ionicons name="thumbs-down" size={18} color={userHasDisagreed ? "white" : "black"} />
-            <Text style={{ marginLeft: 5, color: userHasDisagreed ? "white" : "black" }}>
+            <Ionicons name="thumbs-down" size={18} color={item.userHasDisagreed ? "white" : "black"} />
+            <Text style={{ marginLeft: 5, color: item.userHasDisagreed ? "white" : "black" }}>
               {disagreeButtonText}
             </Text>
           </Pressable>
@@ -204,10 +224,10 @@ const PostCard = ({ item, onVote, currentUserId }) => {
 
         {/* Vote Counts */}
         <View style={{ flexDirection: "row", justifyContent: "space-around", marginVertical: 8 }}>
-          <Text style={{ fontWeight: userHasAgreed ? "bold" : "normal" }}>
+          <Text style={{ fontWeight: item.userHasAgreed ? "bold" : "normal" }}>
             {agreeCounterText}: {item.agreeCount}
           </Text>
-          <Text style={{ fontWeight: userHasDisagreed ? "bold" : "normal" }}>
+          <Text style={{ fontWeight: item.userHasDisagreed ? "bold" : "normal" }}>
             {disagreeCounterText}: {item.disagreeCount}
           </Text>
         </View>
@@ -231,13 +251,9 @@ const PostCard = ({ item, onVote, currentUserId }) => {
           </Pressable>
         </View>
       </View>
-      
-
     </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   normalIconSize: 20,

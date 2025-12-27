@@ -3,14 +3,15 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as FileSystem from 'expo-file-system';
 import { StorageAccessFramework, documentDirectory } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
 import { Button, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ToggleSwitch from "./ToggleSwitch";
+import ToggleSwitch from "@/components/ToggleSwitch";
+import { userID } from "@/app/SignIn.jsx"
 
-export default function Details() {
+export default function Create() {
   // Declaring form state variables
-  const [userID, setUserID] = useState('');
+  const [userID, setUserID] = useState(`${userID}`); 
   const [title, setTitle] = useState(''); // Post title
   const [description, setDescription] = useState('');
   const [postType, setPostType] = useState(''); // 'petition' or 'news post'
