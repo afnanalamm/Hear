@@ -24,66 +24,75 @@ export default function App(){
             // Modified parts in App component
 
   const getAllPosts = async (isRefresh = false) => {
-    try {
-      if (isRefresh) setRefreshing(true); // Only set refreshing for pull-to-refresh  
-      const response = await onFetchAllPosts();
-      if (!response.ok) throw new Error("Failed to fetch posts");
-      
-      const posts = response.data;
+  try {
+    if (isRefresh) setRefreshing(true); // Only set refreshing for pull-to-refresh  
 
-      // Initialize interaction state for each post after they have been fetched
-      const postsWithInteraction = posts.map(post => ({
-        ...post,
-        // userHasAgreed: false,
-        // userHasDisagreed: false,
-        agreeCount: post.agreeCount || 0, // if not defined, start at 0
-        disagreeCount: post.disagreeCount || 0,
-      }));
+    const response = await onFetchAllPosts();
 
-      setPosts(postsWithInteraction);
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "Could not load posts. Please try again.");
-    } finally {
-      if (isRefresh) setRefreshing(false); // resetting refreshing state after fetch
+    // Axios-specific checks
+    if (response.status !== 200) {
+      throw new Error(response.data?.message || "Failed to fetch posts");
     }
-  };
+
+    const posts = response.data;  // ← FIXED: Axios already parses JSON → use response.data
+
+    // Initialize interaction state for each post after they have been fetched
+    const postsWithInteraction = posts.map(post => ({
+      ...post,
+      // userHasAgreed: false,
+      // userHasDisagreed: false,
+      agreeCount: post.agreeCount || 0, // if not defined, start at 0
+      disagreeCount: post.disagreeCount || 0,
+    }));
+
+    setPosts(postsWithInteraction);
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", error.message || "Could not load posts. Please try again.");
+  } finally {
+    if (isRefresh) setRefreshing(false); // resetting refreshing state after fetch
+  }
+};
 
   const onRefresh = () => {
     getAllPosts(true); 
   };
 
     // Handle Agree/Disagree action
-  const handleVote = async (postId, action) => {
-    try {
-      const response = await onVote(postId, action);
+  // Handle Agree/Disagree action
+const handleVote = async (postId, action) => {
+  try {
+    const response = await onVote(postId, action);
 
-      if (!response.ok) throw new Error("Vote failed");
+    if (response.status !== 200) {
+      throw new Error(response.data?.message || "Vote failed");
+    }
 
-      const data = await response.json();
+    const data = response.data;  // ← FIXED: The vote endpoint returns counts + userVoteType in response.data
 
-      // now the app should re-render the post so that the user sees the impact they've made
-      setPosts(prevPosts =>
-        prevPosts.map(p =>
-          p.postID === postId
-            ? {
-                ...p,
-                agreeCount: data.agreeCount,
-                disagreeCount: data.disagreeCount,
-                userVoteType: data.userVoteType,
-              }
-            : p 
+    // now the app should re-render the post so that the user sees the impact they've made
+    setPosts(prevPosts =>
+      prevPosts.map(p =>
+        p.postID === postId
+          ? {
+              ...p,
+              agreeCount: data.agreeCount,
+              disagreeCount: data.disagreeCount,
+              userVoteType: data.userVoteType,
+              userHasVoted: data.userHasVoted !== undefined ? data.userHasVoted : true,
+            }
+          : p
       // This also has best time complexity O(n) & will perform worse with more posts.
       // but it's simpler to implement than maintaining separate states for each post.
       // In the future I might consider using something like Redux or Context API 
       // for better state management.
-        )
-      );
-    } catch (error) {
-      console.error("Vote error:", error);
-      Alert.alert(`${error.message}`);
-    }
-  };
+      )
+    );
+  } catch (error) {
+    console.error("Vote error:", error);
+    Alert.alert(error.message || "Vote failed. Please try again.");
+  }
+};
 
 // FlatList is returned
 

@@ -8,13 +8,13 @@
   import { useAuthentication } from '../components/AuthenticationContext';
 
   export default function SignUp() {
-    const [firstName, setFirstName] = useState('a');
-    const [lastName, setLastName] = useState('a');
+    const [firstName, setFirstName] = useState('d');
+    const [lastName, setLastName] = useState('d');
     const [dateOfBirth, setDateOfBirth] = useState(new Date());
-    const [emailAddress, setEmailAddress] = useState('a');
-    const [contactNumber, setContactNumber] = useState('a');
-    const [password, setPassword] = useState('a');
-    const [confirmPassword, setConfirmPassword] = useState('a');
+    const [emailAddress, setEmailAddress] = useState('d');
+    const [contactNumber, setContactNumber] = useState('d');
+    const [password, setPassword] = useState('d');
+    const [confirmPassword, setConfirmPassword] = useState('d');
     const [addressLine1, setAddressLine1] = useState('');
     const [addressLine2, setAddressLine2] = useState('');
     const [city, setCity] = useState('');
@@ -47,72 +47,61 @@
 
 
     const handleSignUp = async () => {
-      const username = `${firstName}${lastName}`; // ${new Date()}
-      let required_fields = [firstName, lastName, dateOfBirth, contactNumber, emailAddress, password];
-      if (required_fields.some(field => field === '')) {
-        alert('Please fill in all fields.');
-      }
+    // Basic validation
+    if (!firstName || !lastName || !emailAddress || !contactNumber || !password) {
+        alert('Please fill in all required fields.');
+        return;
+    }
 
-      if (password !== confirmPassword) {
-        alert(`Passwords do not match!`);
-      }
+    if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+    }
 
-      const passwordHash = await Crypto.digestStringAsync(
+    const username = `${firstName}${lastName}`.toLowerCase(); // simple username generation
+
+    const passwordHash = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
         password
-      );
+    );
 
-      console.log(passwordHash);
-
-      const newAccountData = {
-        firstName: firstName,
-        lastName: lastName,
-        username: username,
-        dateOfBirth: dateOfBirth,
-        emailAddress: emailAddress,
-        contactNumber: contactNumber,
-        passwordHash: passwordHash,
-        addressLine1: addressLine1,
-        addressLine2: addressLine2,
-        city: city,
-        postCode: postCode,
-        country: country,
-        superUser: superUser,
-        // createdOn: today,
-      };
-
-      try {
-        const url = server + `/create_account`;
-        const options = {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newAccountData),
-        };
-        
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Network error: Request timed out')), 5000)
-        );
-
-        const fetchPromise = fetch(url, options);
-
-        const response = await Promise.race([onCreate_Account(emailAddress, passwordHash), timeoutPromise]);
-        if (response.status !== 201 && response.status !== 200) {
-          const data = await response.json();
-          console.log(data.message);
-          alert(data.message);
-        } else {
-          alert(`Account created successfully! Please log in to continue.`);
-          console.log('Account created successfully', newAccountData);
-          redirectToSignIn();
-        }
-          } catch (error) {
-        alert(`Error: ${error.message}`);
-          }
-      
-
+    const newAccountData = {
+        firstName,
+        lastName,
+        username,
+        dateOfBirth: dateOfBirth.toISOString().split('T')[0], // Send as YYYY-MM-DD
+        emailAddress,
+        contactNumber,
+        passwordHash,
+        addressLine1,
+        addressLine2,
+        city,
+        postCode,
+        country,
+        superUser: false,
+        createdOn: new Date().toISOString()
     };
+
+    try {
+        const response = await onCreate_Account(newAccountData); // Now sends full data
+
+        if (response.error) {
+            alert(response.msg || 'Failed to create account');
+            return;
+        }
+
+        if (response.status === 201 || response.status === 200) {
+            alert('Account created successfully! Please log in to continue.');
+            console.log('Account created:', newAccountData);
+            redirectToSignIn();
+        } else {
+            alert(response.data?.message || 'Something went wrong');
+        }
+    } catch (error) {
+        alert(`Error: ${error.message || 'Network error'}`);
+        console.error("Signup error:", error);
+    }
+};
 
     const redirectToSignIn = () => {
       router.replace('/SignIn');

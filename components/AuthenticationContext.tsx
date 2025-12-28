@@ -55,13 +55,19 @@ export const AuthenticationProvider = ({children} : any ) => {
         loadToken();
     }, [])
 
-    const create_account = async(emailAddress: string, password: string) => {
-        try {
-            return await axios.post(CREATE_ACCOUNT_ENDPOINT,{ emailAddress, password})
-        } catch (e) {
-            return {error: true, msg: (e as any).response.data.msg};
-        }
+    const create_account = async (accountData: any) => {
+    try {
+        const response = await axios.post(CREATE_ACCOUNT_ENDPOINT, accountData);
+        console.log("Account creation response:", response.data);
+        return response;
+    } catch (e: any) {
+        console.error("Account creation error:", e.response?.data || e.message);
+        return {
+            error: true,
+            msg: e.response?.data?.message || e.message || "Failed to create account"
+        };
     }
+};
 
     const login = async(emailAddress: string, password: string) => {
         try {
@@ -80,19 +86,32 @@ export const AuthenticationProvider = ({children} : any ) => {
         }
     }
 
-    const fetchAllPosts = async() => {
-        try {
-            await SecureStore.getItemAsync(TOKEN_KEY);
-
-            const response = await axios.get(FETCH_ALL_POSTS_ENDPOINT)
-            console.log("Response from server", response)
-
-            return response;
-
-        } catch (e) {
-            return {error: true, msg: (e as any).response.data.msg};
+    const fetchAllPosts = async () => {
+    try {
+        const token = await SecureStore.getItemAsync(TOKEN_KEY);
+        
+        if (!token) {
+            throw new Error("No authentication token found");
         }
+
+        // Explicitly set the header for this request (most reliable)
+        const response = await axios.get(FETCH_ALL_POSTS_ENDPOINT, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        console.log("Response from server (fetch posts):", response);
+        return response;
+
+    } catch (e: any) {
+        console.error("Fetch posts error:", e.response || e);
+        return {
+            error: true,
+            msg: e.response?.data?.message || e.message || "Failed to fetch posts"
+        };
     }
+};  
 
     const vote = async(postID: string, reactionType: string) => {
         try {
@@ -117,14 +136,8 @@ export const AuthenticationProvider = ({children} : any ) => {
         try {
             await SecureStore.getItemAsync(TOKEN_KEY);
 
-            const response =  await axios.post(CREATE_POST_ENDPOINT, {postData})
+            const response =  await axios.post(CREATE_POST_ENDPOINT, postData)
             console.log("Response from server", response)
-
-            setAuthenticationState({
-                token: response.data.token,
-                authenticated: true
-            });
-
             
             return response;
         } catch (e) {

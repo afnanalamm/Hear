@@ -12,7 +12,7 @@ import { useAuthentication } from '@/components/AuthenticationContext';
 
 export default function Create() {
   // Declaring form state variables
-  const [userID, setUserID] = useState(`${userID}`); 
+  // const [userID, setUserID] = useState(`${userID}`); 
   const [title, setTitle] = useState(''); // Post title
   const [description, setDescription] = useState('');
   const [postType, setPostType] = useState(''); // 'petition' or 'news post'
@@ -133,7 +133,6 @@ export default function Create() {
     const uniqueTitle_for_media = `${safeTitle}__${timestamp}`;
 
     const postData = { // Preparing the data object to send in the request body
-      userID: userID,
       title: title,
       uniqueTitle_for_media: uniqueTitle_for_media,
       description: description,
@@ -255,23 +254,6 @@ export default function Create() {
         </Modal>
 
         <View style={styles.verticalMultiplexContainer}> 
-          {/* Creating a temporary usernmae text input box, for testing purposes.
-          When the system can properly handle session management, this will be removed.
-          For now, this allows me to "show" different users creating posts by changing
-          just the username.
-          The verticalMultiplexContainer is way to organize component containers that are
-          to be distributed vertically. Multiplex essentially means containing multiple items.
-          There is another horizontalMultiplexContainer for horizontal distribution. */}
-
-          <TextInput
-            style={styles.textInput}
-            placeholder=' Username?'
-            padding='1'
-            placeholderTextColor={'grey'}
-            value={userID}  // the state variable holding the input value
-            onChangeText={setUserID} // the function to update the state variable
-          />
-
           <TextInput
             style={styles.textInput} // Post title input
             placeholder=' Post Title?'
