@@ -3,16 +3,16 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { userID } from "@/app/SignIn.jsx"
+import { useAuthentication } from "@/components/AuthenticationContext";
 
 export default function App(){ 
   // setting all the required states
   const [posts, setPosts] = useState([]); // dynamic array to hold posts fetched from server
   const [refreshing, setRefreshing] = useState(false);
-  const [numAgree, setNumAgree] = useState(12343); // starting with placeholder agree/disagree counts
-  const [numDisagree, setNumDisagree] = useState(654);
+  const { onFetchAllPosts } = useAuthentication();
+  const { onVote } = useAuthentication();
   
-  const CURRENT_USER_ID = userID; // get current user ID from SignIn component
+  
   
 
   useEffect(() => {
@@ -26,10 +26,10 @@ export default function App(){
   const getAllPosts = async (isRefresh = false) => {
     try {
       if (isRefresh) setRefreshing(true); // Only set refreshing for pull-to-refresh  
-      const response = await fetch(`${server}/allposts/${CURRENT_USER_ID}`); // I'll need to change this.
-      // Or may work around it later on, to fetch other data.
+      const response = await onFetchAllPosts();
+      if (!response.ok) throw new Error("Failed to fetch posts");
       
-      const posts = await response.json();
+      const posts = response.data;
 
       // Initialize interaction state for each post after they have been fetched
       const postsWithInteraction = posts.map(post => ({
@@ -56,17 +56,7 @@ export default function App(){
     // Handle Agree/Disagree action
   const handleVote = async (postId, action) => {
     try {
-      const response = await fetch(`${server}/vote`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          postID: postId,
-          userID: CURRENT_USER_ID,
-          reactionType: action, // "agree" or "disagree"
-        }),
-      });
+      const response = await onVote(postId, action);
 
       if (!response.ok) throw new Error("Vote failed");
 
@@ -82,7 +72,11 @@ export default function App(){
                 disagreeCount: data.disagreeCount,
                 userVoteType: data.userVoteType,
               }
-            : p
+            : p 
+      // This also has best time complexity O(n) & will perform worse with more posts.
+      // but it's simpler to implement than maintaining separate states for each post.
+      // In the future I might consider using something like Redux or Context API 
+      // for better state management.
         )
       );
     } catch (error) {
@@ -99,7 +93,7 @@ export default function App(){
         <FlatList
           data={posts}
           renderItem={({ item }) => (
-            <PostCard item={item} onVote={handleVote} currentUserId={CURRENT_USER_ID} />
+            <PostCard item={item} onVote={handleVote}/>
           )}
           keyExtractor={(item) => item.postID.toString()}
           refreshControl={
@@ -111,7 +105,7 @@ export default function App(){
   );
 }
 
-const PostCard = ({ item, onVote, currentUserId }) => {
+const PostCard = ({ item, onVote }) => {
   const mediaURL = item.mediaURL ? `${server}/uploads/${encodeURIComponent(item.mediaURL)}` : null;
   let agreeCounterText, disagreeCounterText; // default counter texts. Declared without any value
   let agreeButtonText = "Agree"; // default button texts

@@ -3,11 +3,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as FileSystem from 'expo-file-system';
 import { StorageAccessFramework, documentDirectory } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import React, { use, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ToggleSwitch from "@/components/ToggleSwitch";
-import { userID } from "@/app/SignIn.jsx"
+import { useAuthentication } from '@/components/AuthenticationContext';
+
 
 export default function Create() {
   // Declaring form state variables
@@ -23,7 +24,7 @@ export default function Create() {
   const today = new Date();
   const timestamp = today.getTime();
   const imgDir = StorageAccessFramework ? '' : documentDirectory + 'images/'; // Directory to store images. This is on phone's file system.
-
+  const { onCreatePost } = useAuthentication();
 
     // Modal and other state variables:
   const [mediaSourceModalVisible, setMediaSourceModalVisible] = useState(false);
@@ -154,12 +155,12 @@ export default function Create() {
           },
           body: JSON.stringify(postData)         // Convert JS object to JSON string
       }
-      const response = await fetch(url, options) // Send request, wait for response
+      const response = await onCreatePost(postData); // Send request, wait for response
 
       // Check if the response status indicates success (200 or 201)
       if (response.status !== 201 && response.status !== 200) {
           // If not successful, parse the response body for error message
-          const data = await response.json()
+          const data = await response.data
           console.log(data.message)   // 
           alert(data.message)         // Logging & showing error on screen for debugging purposes
       } else {
@@ -191,7 +192,7 @@ export default function Create() {
         body: formData,
       });
 
-      const data = await response.json();
+      const data = await response.data
 
       if (response.ok) {
         setMediaURL(data.url || uri);

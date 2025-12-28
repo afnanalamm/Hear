@@ -4,13 +4,15 @@ import React, {useState} from 'react'
 import { Link, router } from 'expo-router'
 import * as Crypto from 'expo-crypto';
 import { server } from '../components/serverConfig';
+import { useAuthentication } from '@/components/AuthenticationContext';
 
 
 export default function SignIn() {
   // State hooks to store user input
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
-  const [userID, setUserID] = useState('');
+  const { onLogin } = useAuthentication();
+
 
   // Function triggered when Sign In button is pressed
   const handleSignIn = async () => {
@@ -46,20 +48,20 @@ export default function SignIn() {
 
       
       const response = await Promise.race([ 
-        fetch(url, options),
+        onLogin(emailAddress, passwordHash),
         timeoutPromise
       ]);
-      // Using Promise.race, The purpose of race here is to ensure that 
+      // The purpose of Promise.race here is to ensure that 
       // if the fetch request takes too long (exceeds 5 seconds), 
       // the timeoutPromise will reject first, triggering the catch block.
 
       // Preparing to handle the server response
-      const data = await response.json(); // Parsing JSON response from server
+      const data = await response.data; // Parsing JSON response from server
       if (response.status === 200) {
         console.log(`User ${emailAddress} has signed in`);
         alert('Logged In!');
         router.replace('/(tabs)/Feed');
-        setUserID(data.userID); // Storing userID from server response
+
       } else {
         console.log(data.message);
         alert(data.message || 'Login failed');

@@ -1,20 +1,23 @@
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
+import { AuthenticationProvider } from '@/components/AuthenticationContext';
 
 export default function RootLayout() {
 
   
     
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <Stack>
-          <Stack.Screen name="SignIn" options={{ headerShown: true}} />
-          <Stack.Screen name="SignUp" options={{ headerShown: true}} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <AuthenticationProvider>
+      <SafeAreaProvider>
+        <SafeAreaView style={{ flex: 1 }}>
+          <Stack>
+            <Stack.Screen name="SignIn" options={{ headerShown: true}} />
+            <Stack.Screen name="SignUp" options={{ headerShown: true}} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </AuthenticationProvider>
   );
 }
  

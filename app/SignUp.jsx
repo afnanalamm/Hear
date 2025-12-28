@@ -5,6 +5,7 @@
   import * as Crypto from 'expo-crypto';
   import { server } from '../components/serverConfig';
   import DateTimePicker from '@react-native-community/datetimepicker';
+  import { useAuthentication } from '../components/AuthenticationContext';
 
   export default function SignUp() {
     const [firstName, setFirstName] = useState('a');
@@ -19,6 +20,7 @@
     const [city, setCity] = useState('');
     const [postCode, setPostCode] = useState('');
     const [country, setCountry] = useState('');
+    const { onCreate_Account } = useAuthentication(); 
 
 
     const superUser = false;
@@ -95,7 +97,7 @@
 
         const fetchPromise = fetch(url, options);
 
-        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        const response = await Promise.race([onCreate_Account(emailAddress, passwordHash), timeoutPromise]);
         if (response.status !== 201 && response.status !== 200) {
           const data = await response.json();
           console.log(data.message);
