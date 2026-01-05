@@ -12,7 +12,7 @@
     const [lastName, setLastName] = useState('d');
     const [dateOfBirth, setDateOfBirth] = useState(new Date());
     const [emailAddress, setEmailAddress] = useState('d');
-    const [contactNumber, setContactNumber] = useState('d');
+    const [contactNumber, setContactNumber] = useState('0');
     const [password, setPassword] = useState('d');
     const [confirmPassword, setConfirmPassword] = useState('d');
     const [addressLine1, setAddressLine1] = useState('');

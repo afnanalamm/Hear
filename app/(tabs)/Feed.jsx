@@ -1,18 +1,19 @@
+import { useAuthentication } from "@/components/AuthenticationContext";
 import { server } from "@/components/serverConfig";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, FlatList, Modal, Image, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { useAuthentication } from "@/components/AuthenticationContext";
 
-export default function App(){ 
+export default function Feed(){ 
   // setting all the required states
   const [posts, setPosts] = useState([]); // dynamic array to hold posts fetched from server
   const [refreshing, setRefreshing] = useState(false);
+  // the useAuthentication hook provides access to the context values for each of the JWT auth functions
   const { onFetchAllPosts } = useAuthentication();
   const { onVote } = useAuthentication();
   
-  
+  const today = new Date();
   
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function App(){
       throw new Error(response.data?.message || "Failed to fetch posts");
     }
 
-    const posts = response.data;  // ← FIXED: Axios already parses JSON → use response.data
+    const posts = response.data;  // Axios already parses JSON, so just use response.data
 
     // Initialize interaction state for each post after they have been fetched
     const postsWithInteraction = posts.map(post => ({
@@ -47,10 +48,10 @@ export default function App(){
 
     setPosts(postsWithInteraction);
   } catch (error) {
-    console.error(error);
-    Alert.alert("Error", error.message || "Could not load posts. Please try again.");
+      console.error(error);
+      Alert.alert("Error", error.message || "Could not load posts. Please try again.");
   } finally {
-    if (isRefresh) setRefreshing(false); // resetting refreshing state after fetch
+      if (isRefresh) setRefreshing(false); // resetting refreshing state after fetch
   }
 };
 
@@ -58,7 +59,7 @@ export default function App(){
     getAllPosts(true); 
   };
 
-    // Handle Agree/Disagree action
+
   // Handle Agree/Disagree action
 const handleVote = async (postId, action) => {
   try {
@@ -68,7 +69,7 @@ const handleVote = async (postId, action) => {
       throw new Error(response.data?.message || "Vote failed");
     }
 
-    const data = response.data;  // ← FIXED: The vote endpoint returns counts + userVoteType in response.data
+    const data = response.data;  //The vote endpoint returns counts + userVoteType in response.data
 
     // now the app should re-render the post so that the user sees the impact they've made
     setPosts(prevPosts =>
@@ -114,7 +115,8 @@ const handleVote = async (postId, action) => {
   );
 }
 
-const PostCard = ({ item, onVote }) => {
+const PostCard = ({ item, onVote}) => {
+  const { user } = useAuthentication();
   const mediaURL = item.mediaURL ? `${server}/uploads/${encodeURIComponent(item.mediaURL)}` : null;
   let agreeCounterText, disagreeCounterText; // default counter texts. Declared without any value
   let agreeButtonText = "Agree"; // default button texts
@@ -131,13 +133,99 @@ const PostCard = ({ item, onVote }) => {
   }
 
   const userVoteType = item.userVoteType; // "agree", "disagree", or null
-
   const userHasAgreed = userVoteType === "agree";
   const userHasDisagreed = userVoteType === "disagree";
 
+  const { onFetchAllComments } = useAuthentication(); 
+  const [allComments, setAllComments] = useState([])
+  const [commentsModalVisible, setCommentsModalVisible] = useState(false); // State to control visibility of comments modal
+
+  const [comment, setComment] = useState('') // State to hold the new comment text user is typing
+  const { onCreateComment } = useAuthentication(); // use JWT authentication to validate request, identify user and make comment
+
+  const getAllComments = async () => {
+    try {
+      const response = await onFetchAllComments(item.postID);
+      // Axios-specific checks
+      if (response.status !== 200) {
+        throw new Error(response.data?.message || "Failed to fetch posts");
+    }
+
+    const comments = response.data
+    setAllComments(comments);
+    
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", error.message || "Could not load comments. Please try again.");
+    }
+  }
+
+  const handleComment = async () => {
+    // Call the onCreateComment function passed as a prop
+      if (comment.trim() === "") {
+        Alert.alert("Comment cannot be empty.");
+        return;
+      }
+      const timestamp = new Date().getTime();
+      const commentData = {
+        postID: item.postID,
+        createdOn: timestamp,
+        commentText: comment
+      }
+      try {
+        const response = await onCreateComment(commentData);
+        if (response.status !== 200) {
+        throw new Error(response.data?.message || "Commenting failed");
+        }
+      } catch (error) {
+        console.error("Vote error:", error);
+        Alert.alert(error.message || "Commenting failed. Please try again.");
+      }
+  };
 
   return (
     <View style={styles.PostCard}>
+
+      {/* COMMENT MODAL */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={commentsModalVisible}
+        onRequestClose={() => setCommentsModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            {/* Close Button (X) at top-right */}
+            <Pressable
+              style={styles.closeButton}
+              onPress={() => setCommentsModalVisible(false)}
+            >
+              <Ionicons name="close" size={30} color="white" />
+            </Pressable>
+
+            {/* Title */}
+            <Text style={styles.modalTitle}>Comments</Text>
+
+            {/* Comments List */}
+            <FlatList
+              data={allComments}
+              renderItem={({ item }) => (
+                <View style={styles.commentItem}>
+                  <Text style={styles.commentUser}>{item.userID || 'Anonymous'}:</Text>
+                  <Text style={styles.commentText}>{item.commentText}</Text>
+                </View>
+              )}
+              keyExtractor={(item) => item.commentID?.toString() || Math.random().toString()} // safer fallback
+              style={styles.commentsList}
+              showsVerticalScrollIndicator={true}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No comments yet.</Text>
+              }
+            />
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.horizontalMultiplexContainer}>
         <Ionicons name="person-circle" size={40} color={styles.lightThemeIconColor} />
         <View>
@@ -221,14 +309,25 @@ const PostCard = ({ item, onVote }) => {
             <TextInput
               placeholder="Leave a comment..."
               placeholderTextColor="grey"
+              value={comment}
+              onChangeText={setComment}
               style={{ flex: 1, padding: 8 }}
             />
-            <Pressable>
+            <Pressable
+              onPress={handleComment}
+              >
               <Ionicons name="send" size={20} color="#007AFF" />
             </Pressable>
           </View>
 
-          <Pressable style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable 
+            onPress={() => {
+              getAllComments();
+              setCommentsModalVisible(true);
+
+
+            }}
+            style={{ flexDirection: "row", alignItems: "center" }}>
             <Ionicons name="chatbubbles" size={20} color="#333" />
             <Ionicons name="chevron-down" size={20} color="#333" />
           </Pressable>
@@ -256,6 +355,67 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  centeredView: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Clean dark overlay
+},
+  modalView: {
+    width: '90%',
+    height: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    marginTop: 10,
+  },
+  commentsList: {
+    width: '100%',
+    flex: 1,
+  },
+  commentItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    width: '100%',
+  },
+  commentUser: {
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  commentText: {
+    marginTop: 4,
+    color: '#333',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#888',
+    fontStyle: 'italic',
+    marginTop: 50,
   },
   horizontalMultiplexContainer: {
     flexDirection: "row",
