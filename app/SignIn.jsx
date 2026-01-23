@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View, Pressable, TextInput } from 'react-native'
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import React, {useState} from 'react'
-import { Link, router } from 'expo-router'
-import * as Crypto from 'expo-crypto';
-import { server } from '../components/serverConfig';
 import { useAuthentication } from '@/components/AuthenticationContext';
+import * as Crypto from 'expo-crypto';
+import { Link, router } from 'expo-router';
+import { jwtDecode } from "jwt-decode";
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { server } from '../components/serverConfig';
 
 
 export default function SignIn() {
@@ -58,13 +59,31 @@ export default function SignIn() {
       // Preparing to handle the server response
       const data = await response.data; // Parsing JSON response from server
       if (response.status === 200) {
-        console.log(`User ${emailAddress} has signed in`);
-        alert('Logged In!');
-        router.replace('/(tabs)/Feed');
+        const token = response.data.access_token;
+        const decodedToken = jwtDecode(token);
+        const isSuperuser = response.data.additional_claims?.isSuperuser;
+
+        
+        console.log("Decoded token: ", decodedToken);
+        console.log("Is superuser? ", isSuperuser);
+
+        if (isSuperuser === "true") {
+          console.log(`User ${emailAddress} has signed in`);
+          alert('Logged In!');
+          router.replace('/(superuser-tabs)/SuperFeed');
+        }
+        else if (isSuperuser === "0") {
+          console.log(`User ${emailAddress} has signed in`);
+          alert('Logged In!');
+          router.replace('/(tabs)/Feed');
+        }
+        else {
+          router.replace('/SignIn');
+        }
 
       } else {
-        console.log(data.message);
-        alert(data.message || 'Login failed');
+        // console.log();
+        alert( 'Login failed');
       }
 
     } catch (error) { // Executed if fetch fails or times out
@@ -172,3 +191,4 @@ const styles = StyleSheet.create({
   divider: { borderBottomWidth: 1, borderColor: 'black', marginVertical: 16 },
   terms: { fontSize: 12, textAlign: 'center', marginTop: 16 },
 });
+

@@ -8,13 +8,13 @@
   import { useAuthentication } from '../components/AuthenticationContext';
 
   export default function SignUp() {
-    const [firstName, setFirstName] = useState('d');
-    const [lastName, setLastName] = useState('d');
+    const [firstName, setFirstName] = useState('o');
+    const [lastName, setLastName] = useState('o');
     const [dateOfBirth, setDateOfBirth] = useState(new Date());
-    const [emailAddress, setEmailAddress] = useState('d');
+    const [emailAddress, setEmailAddress] = useState('o');
     const [contactNumber, setContactNumber] = useState('0');
-    const [password, setPassword] = useState('d');
-    const [confirmPassword, setConfirmPassword] = useState('d');
+    const [password, setPassword] = useState('o');
+    const [confirmPassword, setConfirmPassword] = useState('o');
     const [addressLine1, setAddressLine1] = useState('');
     const [addressLine2, setAddressLine2] = useState('');
     const [city, setCity] = useState('');

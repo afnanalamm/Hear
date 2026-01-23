@@ -27,6 +27,8 @@ const VOTE_ENDPOINT = `${server}/vote`
 const FETCH_ALL_COMMENTS_ENDPOINT = `${server}/allcomments`
 const CREATE_COMMENT_ENDPOINT = `${server}/create_comment`
 const CREATE_POST_ENDPOINT = `${server}/create_post`
+const MODERATE_POST_ENDPOINT = `${server}/moderate_post`
+
 
 // Create the authentication context with a default empty object
 const AuthenticationContext = createContext<AuthenticationProps>({});
@@ -169,7 +171,7 @@ export const AuthenticationProvider = ({children} : any ) => {
             },
             params: {
                 postID: postID  // to adds ?postID=whatever-the-post-id to  URL.
-                // without the params prop, I was getting the error "postID query parameter is required"
+                // without the params, I was getting the error "postID query parameter is required"
                 // from the server.
             }
         });
@@ -215,6 +217,27 @@ export const AuthenticationProvider = ({children} : any ) => {
         }
     }
 
+    // Moderate post (superuser only)
+    const moderatePost = async (postID: string, action: string) => {
+        try {
+            await SecureStore.getItemAsync(TOKEN_KEY)
+
+            const response = await axios.post(
+                MODERATE_POST_ENDPOINT,
+                { postID, action }
+            )
+
+            console.log("Moderation response:", response)
+            return response
+        } catch (e: any) {
+            return {
+                error: true,
+                msg: e.response?.data?.message || e.message
+            }
+        }
+    }
+
+
     // Logout – clears token from storage, headers, and state
     const logout = async() => {
         await SecureStore.deleteItemAsync(TOKEN_KEY); // deleting token from storage
@@ -235,6 +258,7 @@ export const AuthenticationProvider = ({children} : any ) => {
         onCreatePost: createPost,
         onFetchAllComments: fetchAllComments,
         onCreateComment: create_comment,
+        onModeratePost: moderatePost,
         authenticationState
     };
 

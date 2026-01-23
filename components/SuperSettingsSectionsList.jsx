@@ -16,7 +16,7 @@ const ThemeToggle = () => { // component for theme toggle switch
       alignItems: 'center', 
       justifyContent: 'space-between', 
       width: '100%' 
-      }}>
+    }}>
       <Text>Change Theme</Text>
       <ToggleSwitch value={isLightTheme} onValueChange={toggleThemeSwitch} />
     </View>
@@ -45,9 +45,7 @@ const renderItem = ({ item }) => ( //function to render each item in the section
 const renderSectionHeader = ({ section }) => ( // function to render each section header
   <Text style={{fontSize:24}}>{section.title}</Text>
 );
-export default function SettingsSectionsList() {
-  const { onLogout } = useAuthentication();
-
+export default function SuperSettingsSectionsList() {
   const DATA = [ // array of objects representing the sections and their respective items
     {
       title: "Organisational Details",
@@ -69,16 +67,17 @@ export default function SettingsSectionsList() {
       title: "Account Actions",
       data: ["Disable Account", "Delete Account", 
       <Button
-              title="Log Out"
-              onPress={async () => {
-                await onLogout();
-                alert('Logged Out');
-                router.replace('/SignIn');
-              }}
-              key="logout"
-            >Log Out</Button>]
+            title="Log Out"
+            onPress={async () => {
+              await onLogout();
+              alert('Logged Out');
+              router.replace('/SignIn');
+            }}
+            key="logout"
+          >Log Out</Button>]
     }
   ];
+  const { onLogout } = useAuthentication();
 
   return (
     <View>
