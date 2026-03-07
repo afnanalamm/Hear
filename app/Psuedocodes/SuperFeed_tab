@@ -1,0 +1,20 @@
+// ========================================
+// SPECIFIC FUNCTIONS (Feed Screen - Superuser)
+// ========================================
+
+function moderate_post(postId, action)
+    try:
+        server_response = await send_moderate_post_request(userID, postId, action) // to server.
+        // Action is either "approve" or "reject"
+    
+        if server_response.status != 200:
+            throw error
+
+        post_array.find(postId).update(
+                approvalStatus
+                )
+
+    catch error:
+        console.log(error)
+
+

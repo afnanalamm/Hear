@@ -1,3 +1,5 @@
+  // SIGNUP FILE
+  
   import { Link, router } from 'expo-router';
   import React, { useState } from 'react';
   import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Button } from 'react-native';

@@ -32,7 +32,7 @@ export default function Create() {
   const [uri, setUri] = useState('');
 
 
-  // Deadline date picker state variables
+  // Deadline date picker state variables and helper functions
   const [deadline, setDeadline] = useState(new Date());
   const [mode, setMode] = useState('deadline');
   const [show, setShow] = useState(false); // this is for showing date picker on Android

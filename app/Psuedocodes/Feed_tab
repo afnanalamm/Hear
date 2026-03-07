@@ -1,0 +1,178 @@
+// ========================================
+// Example pseudocode for Feed TAB 
+// ========================================
+
+Scrollable screen
+└─ FlatList (posts)
+    ├─ Pull-to-refresh (refresh())
+    └─ post_object (for each post item)
+
+// ========================================
+// COMPONENT: Feed Screen
+// ========================================
+
+STATE VARIABLES:
+    array       posts = []                    // List of post objects from server
+    boolean     refreshing = false            // Pull-to-refresh indicator
+
+function getAllPosts(isRefresh):
+    if isRefresh:
+        refreshing = true
+
+    try:
+        server_response = await fetch request from server
+
+        if server_response.status != 200:
+            throw error
+
+        postsData = server_response.data
+
+        // Ensure vote counters exist
+        postsWithInteraction =
+            for each post in postsData:
+                agreeCount = post.agreeCount or 0
+                disagreeCount = post.disagreeCount or 0
+
+        set posts = postsWithInteraction
+
+    catch error:
+        log error
+        alert fetch failure
+
+    finally:
+        if isRefresh:
+            refreshing = false
+
+
+function onRefresh():
+    getAllPosts(true)
+
+
+// ========================================
+// COMPONENT: post_object
+// post_object UI STRUCTURE
+// ========================================
+
+post_object container
+├─ User header
+│   ├─ Avatar icon
+│   ├─ Username
+│   ├─ Location
+│   └─ Approval status badge
+├─ Search Bar
+├─ Post title
+├─ Post date
+├─ Image (media or placeholder)
+├─ Description
+├─ Post metadata (type, deadline, tags)
+├─ Interaction section
+│   ├─ Agree / Disagree buttons
+│   ├─ Vote counters
+│   ├─ Comment input text entry
+│   ├─ Send button
+│   ├─ Show comments button
+│   └─ Share button
+└─ Comments modal
+│   ├─ Close button
+│   ├─ Title
+│   └─ FlatList of comments (or empty)
+└─ MoreActions modal
+    ├─ Wider information button
+    └─ Report button
+
+// ========================================
+
+DATA:
+    mediaURL = server/uploads/media filename (if exists)
+    button labels depend on postType (Petition / News Post)
+    userHasAgreed / userHasDisagreed from userVoteType
+
+STATE VARIABLES:
+    array       allComments = []
+    boolean     show_MoreActions = false
+    boolean     commentsModalVisible = false
+    string      comment = ""                  // New comment input
+
+
+function get_all_comments(postID)
+    try:
+        server_response = await fetch_comments_from_server(postID)
+        if server_response.status != 200: 
+        (200 status code indicates success in network requests)
+            throw error
+
+        allComments = server_response.data
+
+    catch error:
+        console.log(error)
+        alert(error)
+
+
+
+function create_new_comment()
+    if comment === "":
+        alert(required field empty)
+        return
+
+    datetime timestamp = current_timestamp
+
+        commentData:
+        postID
+        createdOn = timestamp
+        commentText = comment
+
+    try:
+        server_response = await onCreateComment(commentData)
+
+        if server_response.status != 200:
+            throw error
+
+    catch error:
+        log error
+        alert comment failure
+
+function new_vote(postId, action)
+    try:
+        server_response = await fetch_request(userID, postId, action) // to server.
+        // Action is either "agree", "disagree", or "remove_vote"
+    
+        if server_response.status != 200:
+            throw error
+
+        update posts array:
+            post_array.find(postId).update(
+                agreeCount
+                disagreeCount
+                userVoteType
+                userHasVoted
+                )
+
+    catch error:
+        console.log(error)
+
+function share_post()
+    // build link to a specific newspost/petition
+
+    message:{
+        title
+        username
+        description
+        postType
+        location
+        link
+    }
+    try:
+        invoke(Share dialog, message)
+    catch error:
+        console.log(error)
+
+function more_actions(postID):
+    show_MoreActions = true
+    if wider_information_button.pressed():
+        launch search
+    if report_button.pressed():
+        create new form dialogue
+        form.title = string         // user inputs a brief title for the reason of reporting
+        form.description = string   // user inputs the full details of why they want report this post/petition
+        form.submitButton = button  // if pressed, the report is submitted to server
+        show_MoreActions = false

@@ -1,0 +1,60 @@
+// ========================================
+// SCREEN: Sign In / Log In
+// ========================================
+Container (centered / padded layout)
+    ├─ App header
+    │ ├─ Header title ("Hear")
+    │ └─ Subtitle ("Enter your UserID to start using this app")
+    └─ Form section
+        ├─ Email / Username / Phone- number input field
+        ├─ Password input field (masked)
+        ├─ Primary action button ("Continue") or "Sign In"
+        ├─ Navigation links row
+        │ ├─ "Create new account" -> navigate to SignUp
+        │ └─ "Forgotten Password?" -> (placeholder / future)
+        ├─ Visual divider
+        ├─ Secondary login options
+        │ ├─ "Continue with Google" (button)
+        │ └─ "Continue with Apple" (button)
+        └─ Legal text
+            "By continuing, you agree to our Terms of Service and Privacy Policy"
+            (with clickable links)
+
+// ========================================
+// STATE VARIABLES
+// ========================================
+string emailAddress = ""          // user input – email or username
+string password = ""              // user input – plain text during typing
+boolean isLoading = false         // disable inputs/button during login attempt
+
+function sign_in():
+    if emailAddress == "" or password == "":
+        alert("Please fill in all fields.")
+        return
+
+    set isLoading = true
+    try:
+        // Option A: Client-side hashing (chosen approach)
+        passwordHash = compute SHA256(password) // hash clientsite, then hash again server-side for security
+        login_request = send_login_request(emailAddress, passwordHash) // send email and hashed password to server
+        response = await login_request // await response from server
+
+        if response.status != 200:
+            throw new error("Login failed")
+
+        isSuperuser = response.isSuperuser
+            // expected values: "true", "false"
+
+        console.log("Login successful for: ", emailAddress)
+        alert("Logged In!")
+
+        // Route user based on role
+        if isSuperuser is true:
+            tabs.navigate(SuperFeed)
+        else:
+            tabs.navigate(Feed)
+
+    catch error:
+        console.log("Login error: ", error.message)
+    finally:
+        set isLoading = false

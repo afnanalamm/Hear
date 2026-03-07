@@ -1,101 +1,122 @@
 import { useAuthentication } from "@/components/AuthenticationContext";
 import { server } from "@/components/serverConfig";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Modal, Image, Pressable, RefreshControl, StyleSheet, Text, TextInput, View, Share } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import { Alert, FlatList, Modal, Image, Pressable, RefreshControl, StyleSheet, Text, TextInput, View, Share, InteractionManager } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function Feed(){ 
-  // setting all the required states
-  const [posts, setPosts] = useState([]); // dynamic array to hold posts fetched from server
+  const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  // the useAuthentication hook provides access to the context values for each of the JWT auth functions
+  const [speedMbps, setSpeedMbps] = useState(null);
+  const [fetchTimeMs, setFetchTimeMs] = useState(null);
+  const [renderTimeMs, setRenderTimeMs] = useState(null);
+  const [postsCount, setPostsCount] = useState(0);
+
+  const startTimeRef = useRef(null);
+  const speedRef = useRef(null);
+
   const { onFetchAllPosts } = useAuthentication();
   const { onVote } = useAuthentication();
-  
-  const today = new Date();
-  
 
+  // Track render time
   useEffect(() => {
-    getAllPosts();
-  }, []);   // The second parameter is a dependency array, which ensures the effect runs only 
-            // once when the component mounts. Component mounting on a React Native app is similar
-            // to page load on a web app. 
-            // I write these comments for my own understanding, btw (to the moderator)
-            // Modified parts in App component
+    if (posts.length > 0 && startTimeRef.current !== null) {
+      InteractionManager.runAfterInteractions(() => {
+        const renderTime = Date.now() - startTimeRef.current;
+        setRenderTimeMs(renderTime);
+
+        Alert.alert(
+          "Load Complete",
+          `Posts fetched: ${postsCount}\nFetch time: ${fetchTimeMs}ms\nRender time: ${renderTime}ms\nInternet speed: ${speedRef.current || "N/A"} Mbps`,
+          [{ text: "OK" }]
+        );
+
+        startTimeRef.current = null;
+        speedRef.current = null;
+      });
+    }
+  }, [posts.length, fetchTimeMs, postsCount]);
 
   const getAllPosts = async (isRefresh = false) => {
-  try {
-    if (isRefresh) setRefreshing(true); // Only set refreshing for pull-to-refresh  
+    const startTime = Date.now();
+    startTimeRef.current = startTime;
 
-    const response = await onFetchAllPosts();
+    try {
+      if (isRefresh) setRefreshing(true);
 
-    // Axios-specific checks
-    if (response.status !== 200) {
-      throw new Error(response.data?.message || "Failed to fetch posts");
-    }
+      const response = await onFetchAllPosts();
 
-    const posts = response.data;  // Axios already parses JSON, so just use response.data
+      if (response.status !== 200) {
+        throw new Error(response.data?.message || "Failed to fetch posts");
+      }
 
-    // Initialize interaction state for each post after they have been fetched
-    const postsWithInteraction = posts.map(post => ({
-      ...post,
-      // userHasAgreed: false,
-      // userHasDisagreed: false,
-      agreeCount: post.agreeCount || 0, // if not defined, start at 0
-      disagreeCount: post.disagreeCount || 0,
-    }));
+      const postsData = response.data;
 
-    setPosts(postsWithInteraction);
-  } catch (error) {
-      console.error(error);
+      // Calculate approximate internet speed
+      let dataSizeBytes = 0;
+      const contentLength = response.headers?.["content-length"];
+      if (contentLength) {
+        dataSizeBytes = parseInt(contentLength, 10);
+      } else {
+        dataSizeBytes = new TextEncoder().encode(JSON.stringify(postsData)).length;
+      }
+
+      const fetchTime = Date.now() - startTime;
+      const fetchTimeSec = fetchTime / 1000;
+      const bitsPerSecond = fetchTimeSec > 0 ? (dataSizeBytes * 8) / fetchTimeSec : 0;
+      const speed = (bitsPerSecond / (1024 * 1024)).toFixed(2);
+
+      speedRef.current = speed;
+      setSpeedMbps(speed);
+      setFetchTimeMs(fetchTime);
+      setPostsCount(postsData.length);
+
+      const postsWithInteraction = postsData.map((post) => ({
+        ...post,
+        agreeCount: post.agreeCount || 0,
+        disagreeCount: post.disagreeCount || 0,
+      }));
+
+      setPosts(postsWithInteraction);
+    } catch (error) {
+      console.error("Fetch error:", error);
       Alert.alert("Error", error.message || "Could not load posts. Please try again.");
-  } finally {
-      if (isRefresh) setRefreshing(false); // resetting refreshing state after fetch
-  }
-};
-
-  const onRefresh = () => {
-    getAllPosts(true); 
+    } finally {
+      if (isRefresh) setRefreshing(false);
+    }
   };
 
+  const onRefresh = () => {
+    getAllPosts(true);
+  };
 
-  // Handle Agree/Disagree action
-const handleVote = async (postId, action) => {
-  try {
-    const response = await onVote(postId, action);
+  const handleVote = async (postId, action) => {
+    try {
+      const response = await onVote(postId, action);
+      if (response.status !== 200) {
+        throw new Error(response.data?.message || "Vote failed");
+      }
+      const data = response.data;
 
-    if (response.status !== 200) {
-      throw new Error(response.data?.message || "Vote failed");
+      setPosts(prevPosts =>
+        prevPosts.map(p =>
+          p.postID === postId
+            ? {
+                ...p,
+                agreeCount: data.agreeCount,
+                disagreeCount: data.disagreeCount,
+                userVoteType: data.userVoteType,
+                userHasVoted: data.userHasVoted !== undefined ? data.userHasVoted : true,
+              }
+            : p
+        )
+      );
+    } catch (error) {
+      console.error("Vote error:", error);
+      Alert.alert(error.message || "Vote failed. Please try again.");
     }
-
-    const data = response.data;  //The vote endpoint returns counts + userVoteType in response.data
-
-    // now the app should re-render the post so that the user sees the impact they've made
-    setPosts(prevPosts =>
-      prevPosts.map(p =>
-        p.postID === postId
-          ? {
-              ...p,
-              agreeCount: data.agreeCount,
-              disagreeCount: data.disagreeCount,
-              userVoteType: data.userVoteType,
-              userHasVoted: data.userHasVoted !== undefined ? data.userHasVoted : true,
-            }
-          : p
-      // This also has best time complexity O(n) & will perform worse with more posts.
-      // but it's simpler to implement than maintaining separate states for each post.
-      // In the future I might consider using something like Redux or Context API 
-      // for better state management.
-      )
-    );
-  } catch (error) {
-    console.error("Vote error:", error);
-    Alert.alert(error.message || "Vote failed. Please try again.");
-  }
-};
-
-// FlatList is returned
+  };
 
   return (
     <SafeAreaProvider>
@@ -109,14 +130,26 @@ const handleVote = async (postId, action) => {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
+          ListHeaderComponent={
+            posts.length > 0 && (
+              <View style={{ padding: 10 }}>
+                <Text>Posts fetched: {postsCount}</Text>
+                <Text>Fetch time: {fetchTimeMs}ms</Text>
+                <Text>Render time: {renderTimeMs}ms</Text>
+                <Text>Approx. link speed: {speedMbps} Mbps</Text>
+              </View>
+            )
+          }
         />
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
 
+// Keep PostCard and styles unchanged
+
+
 const PostCard = ({ item, onVote}) => {
-  const { user } = useAuthentication();
   const mediaURL = item.mediaURL ? `${server}/uploads/${encodeURIComponent(item.mediaURL)}` : null;
   let agreeCounterText, disagreeCounterText; // default counter texts. Declared without any value
   let agreeButtonText = "Agree"; // default button texts

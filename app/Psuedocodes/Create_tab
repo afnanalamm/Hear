@@ -1,0 +1,135 @@
+CREATE TAB UI RENDER:
+
+    Scrollable screen
+
+    ├─ Text input:          Post Title (modifies title variable) 
+    ├─ Multiline input:     Description (modifies description variable)
+    ├─ Toggle:              Petition  <-->  News Post (modifies postType variable)
+    ├─ Media section:
+    │   ├─ Button:          "Add Media" -> opens modal
+            └─ Modal (choose media source):
+                    ├─ Cancel (X)
+                    ├─ "Pick from gallery" button -> opens gallery
+                    └─ "Take a photo" button -> opens camera
+    │   └─ Horizontal scroll:  preview thumbnails + delete "❌" button
+    ├─ Deadline picker:
+    │   Shows a pop-up modal to display the native datepicker component
+        (modifies deadline variable)
+    ├─ Text input:          Location / impacted area (modifies location variable)
+    ├─ Text input:          Tags (modifies tags variable)
+    └─ Button:          "Post!"
+
+
+
+// ========================================
+// COMPONENT: Create Post Screen
+// ========================================
+
+STATE VARIABLES:
+    string      title = ""                   //Empty strings filled when user types something
+    string      description = ""
+    string      postType = ""                // "Petition" or "News Post"
+    string      location = ""
+    array       tags = ""
+    datetime    deadline = date
+    array       media_previews = []          // local URIs for preview
+    boolean     uploading = false
+  
+
+
+
+FUNCTIONS:
+
+    function selectMedia(fromLibrary: boolean):
+        show MediaPickerModal
+            request permission (gallery or camera)
+            if permission == "denied": 
+                alert(error) // as a notification
+            else:
+                launch image picker / camera
+                    options(crop, rotate, flip image)
+
+                    if user picked image:
+                        media_previews.append(image_uri)
+    
+        close MediaPickerModal
+
+
+    function deleteMedia(previewUri):
+        media_previews.remove(previewUri) // Removes preview from list (does not delete file)
+
+    function dateChange(selectedDate): // Called when user picks a date for deadline
+        if selectedDate exists:
+            deadline = selectedDate
+        close datepicker
+
+
+    function create_new_post():
+        timestamp = today(date, month, year, hour, minute, seconds, milliseconds)
+        safe_title = make_safe_copy(title)  // replace non-alphanumeric with "_" to clean & sanitise filename
+        unique_media_name = safe_title + "__" + timestamp // simple solution to achieve unique filename
+        media_filename = unique_media_name + "_media.jpeg" // sending all files as .jpeg for simplicity in first iteration. 
+                                                           // Compression leads to slight loss in quality
+
+        postData = {
+            title,
+            uniqueTitle_for_media: unique_media_name,
+            description,
+            postType,
+            mediaURL: media_filename, // filename in a format the server will expect
+            deadline,
+            location,
+            tags,
+            createdOn: timestamp
+        }
+
+        // Step 1: Create post metadata
+        try:
+            response = await send_create_new_post(postData)
+            
+            if response.status !== 200 & response.status !== 201: // Check if the server provides a "success" message
+                alert(error)
+            return
+
+            alert("Post submitted successfully") // as a notification
+
+        catch error:
+            console.log(error) // for debugging
+            alert(error) // as a notification - FOR CURRENT DEBUGGING PURPOSES
+
+        // Step 2: Upload media (if any)
+
+        if media_previews is not empty:
+            set uploading = true
+            image = (previewsFromMedia[0]) // take first image only, for simplicity in initial implementation
+            
+            imageData:
+                media: image
+                uri = local image uri
+                name = media_filename
+                type = "image/jpeg"
+
+            try:
+                upload_response = await POST(media_upload_API, Data)
+                if upload_response.ok:
+                    alert("Media uploaded successfully") // notification
+                else:
+                    alert(error) // show upload error
+
+            catch error:
+                alert(error) // any error that may be encountered during media upload
+
+            finally:
+                set uploading = false
+
+
+SIMPLIFIED MAIN FLOW SUMMARY:
+
+1. User fills title, description, chooses type (petition/news)
+2. Picks one or more images (Optional) 
+3. Sets deadline 
+4. location & tags
+5. Presses "Post!" button
+   - sends postData to server
+   - server creates new Post record (an object, when using Python) in Posts table
+   - if images selected -> uploads first image (if multiple selected) to server

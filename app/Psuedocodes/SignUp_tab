@@ -1,0 +1,92 @@
+// ========================================
+// SCREEN: Sign Up Screen
+// ========================================
+
+Scrollable screen
+└─ Header ("Start Hearing")
+└─ ScrollView
+    ├─ Title ("Activate your account")
+    ├─ Subtitle ("Request activation to start using this app")
+    ├─ Personal Information section
+    │   ├─ First Name input
+    │   ├─ Last Name input
+    │   └─ Date of Birth picker
+    ├─ Address section
+    │   ├─ Address Line 1 input
+    │   ├─ Address Line 2 input
+    │   ├─ Post Code input
+    │   └─ Country input
+    ├─ Login Details section
+    │   ├─ Email input
+    │   ├─ Phone Number input
+    │   ├─ Password input (secure text)
+    │   └─ Confirm Password input (secure text)
+    ├─ "Request your account activation" button
+    ├─ "Log in instead?" button
+    └─ Disclaimer with Terms of Service and Privacy Policy links
+
+
+// ========================================
+// COMPONENT: Sign Up Screen
+// ========================================
+
+STATE VARIABLES:
+    string      firstName = ""
+    string      lastName = ""
+    date        dateOfBirth = ""
+    string      emailAddress = ""
+    string      contactNumber = ""
+    string      password = ""
+    string      confirmPassword = ""
+    string      addressLine1 = ""
+    string      addressLine2 = ""
+    string      city = ""
+    string      postCode = ""
+    string      country = ""
+
+// ========================================
+
+DATA:
+    string username = `${firstName}${lastName}`.toLowerCase(); // simple username generation
+    string passwordHash = encrypt(algorithm = SHA256, password)
+    // superUser is always false on self-activation, unless the acount has ben manually added to the server
+    // using the command line interface on the server. This is to prevent anyone from maliciously give
+    // themselves superUser status
+    datetime account_createdOn = today.timestamp()
+
+
+function onDateOfBirthChange(selectedDate):
+    dateOfBirth = currentDate
+
+function create_account():
+    if any required field is empty:
+        alert("Please fill in all required fields.")
+        return
+
+    if password !== confirmPassword:
+        alert("Passwords do not match!")
+        return
+
+    newAccountData: {
+        firstName, lastName, username, dateOfBirth, // formatted as YYYY-MM-DD
+        emailAddress, contactNumber, passwordHash, 
+        addressLine1, addressLine2, city, postCode, 
+        country, account_createdOn
+        }
+
+    try:
+        server_response = await send_account_creation_request(newAccountData) // to server
+
+        if server_response.error:
+            alert("Failed to create account") // so that users can try again later, or understand the error that happened
+            return
+
+        if server_response.status == 200 or 201:
+            alert("Account created successfully! Please log in to continue.")
+            redirect to SignIn screen
+
+        else:
+            alert("Something went wrong")
+
+    catch error:
+        alert(error.message or "Network error")
