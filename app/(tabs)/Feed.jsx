@@ -130,6 +130,10 @@ export default function Feed(){
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
+          contentContainerStyle={{ flexGrow: 1 }}   // <-- Added contentContainerStyle
+          // This forces the list container to fill the screen 
+          // so pull-to-refresh works even when there are 0 items.
+
           ListHeaderComponent={
             posts.length > 0 && (
               <View style={{ padding: 10 }}>
